@@ -75,6 +75,9 @@ func (gp *GossipProtocol) sendGossip() {
     gp.localNode.LastHeartbeat = time.Now()
     gp.clusterState.Version++
 
+    merkleTree := BuildMerkleTree(gp.clusterState.Nodes)
+    rootHash := merkleTree.GetRootHash()
+
     msg := models.GossipMessage{
         State: models.ClusterState{
             ReplicationFactor: gp.clusterState.ReplicationFactor,
@@ -82,6 +85,8 @@ func (gp *GossipProtocol) sendGossip() {
         },
         From:     gp.localNode.ID,
         Version:  gp.clusterState.Version,
+        RootHash: rootHash,
+        IsFull:   false,
     }
     gp.mu.Unlock()
 
@@ -123,6 +128,15 @@ func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
     gp.mu.Lock()
     defer gp.mu.Unlock()
 
+    if !msg.IsFull {
+        localTree := BuildMerkleTree(gp.clusterState.Nodes)
+        if localTree.GetRootHash() != msg.RootHash {
+            // Mismatch detected, request full sync
+            go gp.requestFullSync(msg.From)
+        }
+        return
+    }
+
     for nodeID, remoteNode := range msg.State.Nodes {
         localNode, exists := gp.clusterState.Nodes[nodeID]
 
@@ -148,6 +162,59 @@ func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
     if msg.Version > gp.clusterState.Version {
         gp.clusterState.Version = msg.Version
     }
+}
+
+func (gp *GossipProtocol) requestFullSync(nodeID string) {
+    gp.mu.RLock()
+    node, exists := gp.clusterState.Nodes[nodeID]
+    gp.mu.RUnlock()
+
+    if !exists || node.Status == "down" {
+        return
+    }
+
+    req := models.GossipSyncRequest{
+        From: gp.localNode.ID,
+    }
+    internalMsg := models.InternalMessage{
+        Type:    "gossip_sync",
+        Payload: req,
+        From:    gp.localNode.ID,
+    }
+    
+    data, err := json.Marshal(internalMsg)
+    if err == nil {
+        gp.client.Send(node.Address, data)
+    }
+}
+
+func (gp *GossipProtocol) HandleGossipSyncRequest(req models.GossipSyncRequest) {
+    gp.mu.Lock()
+    
+    merkleTree := BuildMerkleTree(gp.clusterState.Nodes)
+    rootHash := merkleTree.GetRootHash()
+    
+    stateCopy := models.ClusterState{
+        Nodes:             make(map[string]*models.NodeInfo),
+        ReplicationFactor: gp.clusterState.ReplicationFactor,
+        Version:           gp.clusterState.Version,
+    }
+
+    for id, node := range gp.clusterState.Nodes {
+        nodeCopy := *node
+        stateCopy.Nodes[id] = &nodeCopy
+    }
+
+    msg := models.GossipMessage{
+        State:    stateCopy,
+        From:     gp.localNode.ID,
+        Version:  gp.clusterState.Version,
+        RootHash: rootHash,
+        IsFull:   true,
+    }
+    gp.mu.Unlock()
+
+    go gp.sendGossipToNode(req.From, msg)
 }
 
 func (gp *GossipProtocol) selectRandomActiveNodes(count int) []string {

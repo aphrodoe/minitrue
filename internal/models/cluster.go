@@ -8,7 +8,7 @@ type NodeInfo struct {
     HTTPPort      int       `json:"http_port"`
     MQTTPort      int       `json:"mqtt_port"`
     LastHeartbeat time.Time `json:"last_heartbeat"`
-    Status        string    `json:"status"`
+    Status        string    `json:"status"` 
 }
 
 type ClusterState struct {
@@ -18,13 +18,19 @@ type ClusterState struct {
 }
 
 type GossipMessage struct {
-    State   ClusterState `json:"state"`
-    From    string       `json:"from"`
-    Version int64        `json:"version"`
+    State    ClusterState `json:"state"`
+    From     string       `json:"from"`
+    Version  int64        `json:"version"`
+    RootHash string       `json:"root_hash"`
+    IsFull   bool         `json:"is_full"`
+}
+
+type GossipSyncRequest struct {
+    From string `json:"from"`
 }
 
 type InternalMessage struct {
-    Type    string      `json:"type"`
-    Payload interface{} `json:"payload"`
-    From    string      `json:"from"`
+    Type    string      `json:"type"`    
+    Payload interface{} `json:"payload"` 
+    From    string      `json:"from"` 
 }
