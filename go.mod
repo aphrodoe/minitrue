@@ -1,3 +1,3 @@
-module github.com/aphrodoe/minitrue
+module github.com/minitrue
 
 go 1.25.2
