@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>IoT Query Dashboard</title>
+  <style>
+    body { font-family: system-ui, Arial; margin: 20px; }
+    label{display:block; margin-top:8px;}
+    input, select { padding:6px; width:300px; }
+    button{padding:8px 12px; margin-top:12px;}
+    pre{background:#f6f6f6; padding:12px;border-radius:6px;}
+  </style>
+</head>
+<body>
+  <h2>IoT Query Dashboard</h2>
+  <form id="qform">
+    <label>Device ID
+      <input id="device" placeholder="sensor_1" value="sensor_1" />
+    </label>
+    <label>Metric
+      <input id="metric" value="temperature" />
+    </label>
+    <label>Operation
+      <select id="operation">
+        <option value="avg">avg</option>
+        <option value="sum">sum</option>
+        <option value="max">max</option>
+        <option value="min">min</option>
+      </select>
+    </label>
+    <label>Start Time (unix) <small>(0 for all)</small>
+      <input id="start" value="0" />
+    </label>
+    <label>End Time (unix)
+      <input id="end" value="0" />
+    </label>
+    <button type="submit">Run Query</button>
+  </form>
+
+  <h3>Result</h3>
+  <pre id="output">no result yet</pre>
+
+  <script>
+    const form = document.getElementById('qform');
+    const out = document.getElementById('output');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        device_id: document.getElementById('device').value,
+        metric_name: document.getElementById('metric').value,
+        operation: document.getElementById('operation').value,
+        start_time: Number(document.getElementById('start').value),
+        end_time: Number(document.getElementById('end').value)
+      };
+      out.textContent = "querying...";
+      try {
+        const resp = await fetch('http://localhost:8081/query', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        out.textContent = "error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
