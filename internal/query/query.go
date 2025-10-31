@@ -37,15 +37,7 @@ type Service struct {
 
 func New(m *mqttclient.Client, s storage.Storage) *Service { return NewWithNodeID(m, s, "") }
 func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Service { return NewWithRestart(m, s, nodeID, nil) }
-func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, restartFn func()) *Service {
-    return &Service{mqtt: m, store: s, nodeID: nodeID, restartFn: restartFn}
-}
-
-func (s *Service) StartHTTP(port int) {
-    http.HandleFunc("/query", s.handleQuery)
-    addr := fmt.Sprintf(":%d", port)
-    _ = http.ListenAndServe(addr, nil)
-}
+func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, restartFn func()) *Service { return &Service{mqtt: m, store: s, nodeID: nodeID, restartFn: restartFn} }
 
 func setCORS(w http.ResponseWriter, r *http.Request) bool {
     w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -64,6 +56,13 @@ func parseQueryRequest(w http.ResponseWriter, r *http.Request) (QueryRequest, bo
     return qr, true
 }
 
+func (s *Service) StartHTTP(port int) {
+    http.HandleFunc("/query", s.handleQuery)
+    http.HandleFunc("/query-samples", s.handleQuerySamples)
+    http.HandleFunc("/query-aggregated", s.handleQueryAggregated)
+    _ = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+}
+
 func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
     start := time.Now()
     qr, ok := parseQueryRequest(w, r)
@@ -71,9 +70,28 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
     stats, err := s.store.QueryAggregated(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
     if err != nil { http.Error(w, "storage error", http.StatusInternalServerError); return }
     var result float64
-    if qr.Operation == "avg" && stats.Count > 0 { result = stats.Sum / float64(stats.Count) }
-    if qr.Operation == "sum" { result = stats.Sum }
-    if qr.Operation == "max" { result = stats.Max }
-    if qr.Operation == "min" { result = stats.Min }
+    switch qr.Operation {
+    case "avg": if stats.Count > 0 { result = stats.Sum / float64(stats.Count) }
+    case "sum": result = stats.Sum
+    case "max": result = stats.Max
+    case "min": result = stats.Min
+    default: http.Error(w, "unsupported operation", http.StatusBadRequest); return
+    }
     _ = json.NewEncoder(w).Encode(QueryResult{DeviceID: qr.DeviceID, MetricName: qr.MetricName, Operation: qr.Operation, Result: result, Count: stats.Count, Duration: time.Since(start).Nanoseconds()})
+}
+
+func (s *Service) handleQuerySamples(w http.ResponseWriter, r *http.Request) {
+    qr, ok := parseQueryRequest(w, r)
+    if !ok { return }
+    samples, err := s.store.Query(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
+    if err != nil { http.Error(w, "storage error", http.StatusInternalServerError); return }
+    _ = json.NewEncoder(w).Encode(struct { Samples []float64 `json:"samples"` }{Samples: samples})
+}
+
+func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) {
+    qr, ok := parseQueryRequest(w, r)
+    if !ok { return }
+    stats, err := s.store.QueryAggregated(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
+    if err != nil { http.Error(w, "storage error", http.StatusInternalServerError); return }
+    _ = json.NewEncoder(w).Encode(stats)
 }
