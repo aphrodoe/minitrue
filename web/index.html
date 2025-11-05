@@ -55,7 +55,7 @@
       };
       out.textContent = "querying...";
       try {
-        const resp = await fetch('http://localhost:8081/query', {
+        const resp = await fetch('http://localhost:8080/query', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify(payload)
@@ -69,3 +69,6 @@
   </script>
 </body>
 </html>
+
+
+
