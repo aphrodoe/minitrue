@@ -207,6 +207,7 @@ func (gp *GossipProtocol) detectFailures() {
     defer gp.mu.Unlock()
 
     now := time.Now()
+    nodesToRemove := make([]string, 0)
 
     for nodeID, node := range gp.clusterState.Nodes {
         if nodeID == gp.localNode.ID {
@@ -220,6 +221,7 @@ func (gp *GossipProtocol) detectFailures() {
                 log.Printf("[%s] Node %s marked as DOWN (no heartbeat for %v)", 
                           gp.localNode.ID, nodeID, timeSinceHeartbeat)
                 node.Status = "down"
+                nodesToRemove = append(nodesToRemove, nodeID)
             }
         } else if timeSinceHeartbeat > gp.interval*2 {
             if node.Status == "active" {
@@ -227,6 +229,12 @@ func (gp *GossipProtocol) detectFailures() {
                 node.Status = "suspect"
             }
         }
+    }
+
+    // Note: Actual removal from hash ring is handled by message handler
+    // This just marks them as down in cluster state
+    for _, nodeID := range nodesToRemove {
+        log.Printf("[%s] Node %s should be removed from hash ring", gp.localNode.ID, nodeID)
     }
 }
 
@@ -326,4 +334,31 @@ func (gp *GossipProtocol) IsNodeActive(nodeID string) bool {
         return node.Status == "active"
     }
     return false
+}
+
+// GetNodeInfo returns node information for a given node ID
+func (gp *GossipProtocol) GetNodeInfo(nodeID string) (*models.NodeInfo, bool) {
+    gp.mu.RLock()
+    defer gp.mu.RUnlock()
+
+    node, exists := gp.clusterState.Nodes[nodeID]
+    if !exists {
+        return nil, false
+    }
+    
+    // Return a copy
+    nodeCopy := *node
+    return &nodeCopy, true
+}
+
+// GetNodeByID returns node info by ID (for getting HTTP port)
+func (gp *GossipProtocol) GetNodeByID(nodeID string) *models.NodeInfo {
+    gp.mu.RLock()
+    defer gp.mu.RUnlock()
+    
+    if node, exists := gp.clusterState.Nodes[nodeID]; exists {
+        nodeCopy := *node
+        return &nodeCopy
+    }
+    return nil
 }

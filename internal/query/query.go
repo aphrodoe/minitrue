@@ -238,10 +238,19 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 
 // queryRemoteNode queries a remote node via HTTP to get raw samples
 func (s *Service) queryRemoteNode(nodeID string, qr QueryRequest) ([]float64, error) {
-	// Get node port - in production, use gossip protocol to get node addresses
-	nodePort := s.getNodePort(nodeID)
-	if nodePort == 0 {
-		return nil, fmt.Errorf("unknown node port for %s", nodeID)
+	// Get node port from cluster manager (gossip protocol)
+	clusterMgr := cluster.GetClusterManager()
+	if clusterMgr == nil {
+		return nil, fmt.Errorf("cluster manager not initialized")
+	}
+
+	nodePort, err := clusterMgr.GetNodeHTTPPort(nodeID)
+	if err != nil {
+		// Fallback to static port mapping if gossip hasn't discovered the node yet
+		nodePort = s.getNodePort(nodeID)
+		if nodePort == 0 {
+			return nil, fmt.Errorf("unknown node port for %s: %w", nodeID, err)
+		}
 	}
 
 	// Query the /query-samples endpoint to get raw samples

@@ -35,6 +35,11 @@ func GetHashRing() *cluster.ConsistentHashRing {
 	return hashRing
 }
 
+// SetHashRing sets the global hash ring instance (used by cluster manager)
+func SetHashRing(ring *cluster.ConsistentHashRing) {
+	hashRing = ring
+}
+
 // AddNode adds a node to the consistent hash ring
 func AddNode(nodeID string) {
 	hashRing.AddNode(nodeID)
