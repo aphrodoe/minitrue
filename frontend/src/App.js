@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import './App.css';
 import QueryForm from './components/QueryForm';
 import QueryResults from './components/QueryResults';
+import GradientText from './components/GradientText';
+import Particles from './components/Particles';
 
 function App() {
   const [queryResult, setQueryResult] = useState(null);
@@ -39,26 +41,36 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>🚀 Minitrue</h1>
-        <p>Decentralized Time-Series Database Query Interface</p>
-      </header>
+      <div className="particles-background">
+        <Particles
+          particleCount={200}
+          particleSpread={10}
+          speed={0.1}
+          particleColors={['#ffffff']}
+          moveParticlesOnHover={true}
+          particleHoverFactor={2}
+          alphaParticles={false}
+          particleBaseSize={100}
+          sizeRandomness={1}
+          cameraDistance={20}
+          disableRotation={false}
+        />
+      </div>
+      <GradientText>
+        <h1>Minitrue</h1>
+      </GradientText>
+      <p className="shiny-text">Decentralized Time-Series Database Query Interface</p>
 
-      <main className="App-main">
-        <QueryForm onSubmit={handleQuery} loading={loading} />
-        
-        {error && (
-          <div className="error-message">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
+      <QueryForm onSubmit={handleQuery} loading={loading} />
+      
+      {error && (
+        <div className="error-message">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
-        {queryResult && <QueryResults result={queryResult} />}
-      </main>
+      {queryResult && <QueryResults result={queryResult} />}
 
-      <footer className="App-footer">
-        <p>Built with React • Connected to Go Backend API</p>
-      </footer>
     </div>
   );
 }

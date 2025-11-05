@@ -2,36 +2,72 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
-.App-header {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-  text-align: center;
+.particles-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
 }
 
-.App-header h1 {
+.particles-background .particles-container {
+  pointer-events: auto;
+}
+
+.App h1 {
   font-size: 3rem;
   color: #667eea;
   margin-bottom: 10px;
   font-weight: 700;
+  text-align: center;
+  margin-top: 20px;
 }
 
-.App-header p {
-  color: #666;
-  font-size: 1.1rem;
+/* Gradient text takes precedence */
+.App .animated-gradient-text h1 {
+  color: transparent;
 }
 
-.App-main {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+.App .shiny-text {
+  text-align: center;
+  display: block;
   margin-bottom: 30px;
+  font-size: 1.1rem;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.shiny-text {
+  color: rgba(255, 255, 255, 0.8) !important;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  display: inline-block;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
+}
+
+.shiny-text.disabled {
+  animation: none;
 }
 
 .App-footer {
@@ -51,12 +87,8 @@
 }
 
 @media (max-width: 768px) {
-  .App-header h1 {
+  .App h1 {
     font-size: 2rem;
-  }
-  
-  .App-main {
-    padding: 20px;
   }
 }
 

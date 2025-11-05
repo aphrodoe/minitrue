@@ -1,11 +1,11 @@
 .query-results {
   margin-top: 30px;
   padding-top: 30px;
-  border-top: 2px solid #e0e0e0;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .query-results h2 {
-  color: #333;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 20px;
   font-size: 1.8rem;
 }
@@ -37,13 +37,33 @@
 
 .result-label {
   font-size: 0.9rem;
-  opacity: 0.9;
   margin-bottom: 10px;
   font-weight: 500;
+  color: transparent;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  display: inline-block;
+  animation: shine 4s linear infinite;
 }
 
 .result-card.primary .result-label {
-  opacity: 0.95;
+  color: transparent;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 100%;
+  }
+  100% {
+    background-position: -100%;
+  }
 }
 
 .result-value {
@@ -59,17 +79,18 @@
 }
 
 .results-details {
-  background: #f8f9fa;
+  background: rgba(255, 255, 255, 0.05);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .detail-row:last-child {
@@ -78,11 +99,11 @@
 
 .detail-label {
   font-weight: 600;
-  color: #666;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .detail-value {
-  color: #333;
+  color: rgba(255, 255, 255, 0.8);
   font-family: 'Courier New', monospace;
 }
 
@@ -95,7 +116,7 @@
 }
 
 .results-json h3 {
-  color: #f8f8f2;
+  color: rgba(255, 255, 255, 0.9);
   margin-bottom: 15px;
   font-size: 1.1rem;
 }
