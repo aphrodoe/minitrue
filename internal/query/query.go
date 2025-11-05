@@ -26,7 +26,7 @@ type QueryResult struct {
 	Operation  string  `json:"operation"`
 	Result     float64 `json:"result"`
 	Count      int     `json:"count"`
-	Duration   int64   `json:"duration_ms"`
+	Duration   int64   `json:"duration_ns"`
 }
 
 type Service struct {
@@ -121,7 +121,7 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	duration := time.Since(start).Milliseconds()
+	duration := time.Since(start).Nanoseconds()
 	out := QueryResult{
 		DeviceID:   qr.DeviceID,
 		MetricName: qr.MetricName,

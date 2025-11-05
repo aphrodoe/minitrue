@@ -237,7 +237,7 @@ const QueryForm = ({ onSubmit, loading }) => {
               onChange={handleChange}
               placeholder="Enter start time"
             />
-            <small>Format: MM/DD/YYYY HH:MM AM/PM. Leave empty for all data.</small>
+            <small>Format: MM/DD/YYYY HH:MM AM/PM.</small>
           </div>
 
           <div className="form-group">
@@ -250,7 +250,7 @@ const QueryForm = ({ onSubmit, loading }) => {
               onChange={handleChange}
               placeholder="Enter end time"
             />
-            <small>Format: MM/DD/YYYY HH:MM AM/PM. Leave empty for all data.</small>
+            <small>Format: MM/DD/YYYY HH:MM AM/PM.</small>
           </div>
         </div>
 

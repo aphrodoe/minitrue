@@ -18,43 +18,53 @@
 }
 
 .result-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 25px;
   border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   text-align: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .result-card:hover {
   transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .result-card.primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .result-label {
   font-size: 0.9rem;
   margin-bottom: 10px;
   font-weight: 500;
-  color: transparent;
+  color: rgba(255, 255, 255, 0.9);
   background: linear-gradient(
     120deg,
-    rgba(255, 255, 255, 0) 30%,
+    rgba(255, 255, 255, 0.9) 30%,
     rgba(255, 255, 255, 1) 50%,
-    rgba(255, 255, 255, 0) 70%
+    rgba(255, 255, 255, 0.9) 70%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   display: inline-block;
   animation: shine 4s linear infinite;
+  -webkit-text-fill-color: transparent;
 }
 
 .result-card.primary .result-label {
-  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 @keyframes shine {
@@ -70,20 +80,28 @@
   font-size: 2rem;
   font-weight: 700;
   margin-bottom: 5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.duration-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
 }
 
 .result-operation {
   font-size: 0.85rem;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.8);
   margin-top: 5px;
 }
 
 .results-details {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 20px;
   border-radius: 8px;
   margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .detail-row {
@@ -108,8 +126,11 @@
 }
 
 .results-json {
-  background: #2d2d2d;
-  color: #f8f8f2;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
   padding: 20px;
   border-radius: 8px;
   overflow-x: auto;
@@ -126,6 +147,7 @@
   font-family: 'Courier New', monospace;
   font-size: 0.9rem;
   line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 @media (max-width: 768px) {

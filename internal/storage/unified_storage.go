@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -80,7 +81,26 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 	key := device + "|" + metric
 
 	m.mu.Lock()
-	m.data[key] = append(m.data[key], sample{Timestamp: ts, Value: val, Role: role})
+	newSample := sample{Timestamp: ts, Value: val, Role: role}
+	arr := m.data[key]
+	
+	// Insert in sorted order using binary search for optimal performance
+	insertPos := sort.Search(len(arr), func(i int) bool {
+		return arr[i].Timestamp >= ts
+	})
+	
+	// Insert at the correct position to maintain sorted order
+	if insertPos == len(arr) {
+		// Append at the end
+		m.data[key] = append(arr, newSample)
+	} else {
+		// Insert at position
+		arr = append(arr, sample{}) // Extend slice
+		copy(arr[insertPos+1:], arr[insertPos:]) // Shift elements
+		arr[insertPos] = newSample
+		m.data[key] = arr
+	}
+	
 	if role == "primary" {
 		m.batch = append(m.batch, models.Record{
 			Timestamp: ts,
@@ -106,14 +126,45 @@ func (m *UnifiedStorage) flushBatch() {
 	m.batch = m.batch[:0]
 	m.mu.Unlock()
 	
+	// Sort batch by timestamp to ensure optimal Gorilla compression
+	// Gorilla compression uses delta-of-delta encoding which works best on sorted data
+	sort.Slice(batch, func(i, j int) bool {
+		return batch[i].Timestamp < batch[j].Timestamp
+	})
+	
 	existing, err := m.engine.Read()
 	if err != nil {
 		existing = []models.Record{}
 	}
+	
+	// Merge existing and batch data, maintaining sorted order for optimal compression
 	allRecords := append(existing, batch...)
+	sort.Slice(allRecords, func(i, j int) bool {
+		return allRecords[i].Timestamp < allRecords[j].Timestamp
+	})
+	
 	if err := m.engine.Write(allRecords); err != nil {
 		_ = err
 	}
+}
+
+// binarySearchStart finds the first index where timestamp >= start
+func binarySearchStart(arr []sample, start int64) int {
+	return sort.Search(len(arr), func(i int) bool {
+		return arr[i].Timestamp >= start
+	})
+}
+
+// binarySearchEnd finds the last index where timestamp <= end
+func binarySearchEnd(arr []sample, end int64) int {
+	// Find the first index where timestamp > end, then subtract 1
+	idx := sort.Search(len(arr), func(i int) bool {
+		return arr[i].Timestamp > end
+	})
+	if idx > 0 {
+		return idx - 1
+	}
+	return -1
 }
 
 func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]float64, error) {
@@ -124,12 +175,43 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 	if !ok || len(arr) == 0 {
 		return nil, nil
 	}
-	res := make([]float64, 0, len(arr))
-	for _, s := range arr {
-		if (start == 0 && end == 0) || (s.Timestamp >= start && (end == 0 || s.Timestamp <= end)) {
-			res = append(res, s.Value)
+	
+	// Optimized query using binary search for time range
+	var startIdx, endIdx int
+	
+	if start == 0 && end == 0 {
+		// Return all data
+		startIdx = 0
+		endIdx = len(arr) - 1
+	} else {
+		// Find range boundaries using binary search
+		startIdx = binarySearchStart(arr, start)
+		if startIdx >= len(arr) {
+			// No data in range
+			return []float64{}, nil
+		}
+		
+		if end == 0 {
+			// No end time specified, return everything from start to end
+			endIdx = len(arr) - 1
+		} else {
+			endIdx = binarySearchEnd(arr, end)
+			if endIdx < startIdx {
+				// No data in range
+				return []float64{}, nil
+			}
 		}
 	}
+	
+	// Pre-allocate result slice with exact size for better performance
+	resultCount := endIdx - startIdx + 1
+	res := make([]float64, 0, resultCount)
+	
+	// Iterate only through the range found by binary search
+	for i := startIdx; i <= endIdx; i++ {
+		res = append(res, arr[i].Value)
+	}
+	
 	return res, nil
 }
 

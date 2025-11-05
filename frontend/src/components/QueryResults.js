@@ -4,15 +4,22 @@ import './QueryResults.css';
 const QueryResults = ({ result }) => {
   if (!result) return null;
 
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp || timestamp === 0) return 'All data';
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleString();
-  };
-
-  const formatDuration = (ms) => {
-    if (ms < 1) return '< 1ms';
-    return `${ms}ms`;
+  const formatDuration = (nanoseconds) => {
+    // Backend now returns nanoseconds directly
+    if (!nanoseconds || nanoseconds === 0) {
+      return (
+        <>
+          0 <span className="duration-unit">nanoseconds</span>
+        </>
+      );
+    }
+    
+    // Format with commas for readability on large numbers
+    return (
+      <>
+        {nanoseconds.toLocaleString()} <span className="duration-unit">nanoseconds</span>
+      </>
+    );
   };
 
   return (
@@ -33,7 +40,7 @@ const QueryResults = ({ result }) => {
 
         <div className="result-card">
           <div className="result-label">Query Time</div>
-          <div className="result-value">{formatDuration(result.duration_ms)}</div>
+          <div className="result-value">{formatDuration(result.duration_ns)}</div>
         </div>
       </div>
 
@@ -50,11 +57,6 @@ const QueryResults = ({ result }) => {
           <span className="detail-label">Operation:</span>
           <span className="detail-value">{result.operation}</span>
         </div>
-      </div>
-
-      <div className="results-json">
-        <h3>Raw JSON Response</h3>
-        <pre>{JSON.stringify(result, null, 2)}</pre>
       </div>
     </div>
   );
