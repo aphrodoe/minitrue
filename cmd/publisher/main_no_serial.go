@@ -16,7 +16,7 @@ import (
 
 func main() {
 	broker := flag.String("broker", "tcp://localhost:1883", "mqtt broker")
-	sim := flag.Bool("sim", true, "simulate sensors (always true in no_serial build)")
+	sim := flag.Bool("sim", true, "simulate sensors")
 	flag.Parse()
 
 	mqttc, err := mqttclient.New(mqttclient.Options{

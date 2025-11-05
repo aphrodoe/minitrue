@@ -15,7 +15,7 @@ import (
 type QueryRequest struct {
 	DeviceID   string `json:"device_id"`
 	MetricName string `json:"metric_name"`
-	Operation  string `json:"operation"` // avg | sum | max | min
+	Operation  string `json:"operation"`
 	StartTime  int64  `json:"start_time"`
 	EndTime    int64  `json:"end_time"`
 }
@@ -48,12 +48,10 @@ func (s *Service) StartHTTP(port int) {
 }
 
 func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
-	// Enable CORS for React frontend
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	// Handle preflight OPTIONS request
+	
 	if r.Method == "OPTIONS" {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -136,7 +134,3 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(out)
 }
-
-
-
-

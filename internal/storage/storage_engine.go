@@ -80,28 +80,12 @@ func (se *StorageEngine) Write(records []models.Record) error {
 
 func (se *StorageEngine) buildHeader(recordCount int) []byte {
 	header := make([]byte, HeaderSize)
-	
 	binary.LittleEndian.PutUint32(header[0:4], MagicNumber)
 	binary.LittleEndian.PutUint32(header[4:8], FormatVersion)
 	binary.LittleEndian.PutUint64(header[8:16], uint64(recordCount))
 	binary.LittleEndian.PutUint32(header[16:20], 2)
-	
 	copy(header[20:], []byte("TSDB"))
-	
 	return header
-}
-
-func (se *StorageEngine) encodeInt64Column(data []int64) []byte {
-	result := make([]byte, 8+len(data)*8)
-	
-	binary.LittleEndian.PutUint32(result[0:4], 0)
-	binary.LittleEndian.PutUint32(result[4:8], uint32(len(data)*8))
-	
-	for i, val := range data {
-		binary.LittleEndian.PutUint64(result[8+i*8:], uint64(val))
-	}
-	
-	return result
 }
 
 func (se *StorageEngine) encodeCompressedColumn(compressedData []byte) []byte {
@@ -117,7 +101,6 @@ func (se *StorageEngine) encodeCompressedColumn(compressedData []byte) []byte {
 
 func (se *StorageEngine) buildFooter(timestampOffset, timestampSize,
 	valueOffset, valueSize int64, recordCount int) []byte {
-	
 	footer := make([]byte, 0, 256)
 	
 	versionBuf := make([]byte, 4)
@@ -139,7 +122,6 @@ func (se *StorageEngine) buildFooter(timestampOffset, timestampSize,
 
 func (se *StorageEngine) buildColumnMetadata(name string, columnType uint32,
 	offset, size int64, recordCount int) []byte {
-	
 	metadata := make([]byte, 0, 64)
 	
 	nameLenBuf := make([]byte, 4)
@@ -195,7 +177,6 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	}
 
 	pos := 8
-	
 	timestampNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(timestampNameLen)
 	pos += 4
@@ -226,14 +207,6 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	}
 
 	return records, nil
-}
-
-func (se *StorageEngine) decodeInt64Column(data []byte, count int) []int64 {
-	result := make([]int64, count)
-	for i := 0; i < count; i++ {
-		result[i] = int64(binary.LittleEndian.Uint64(data[8+i*8:]))
-	}
-	return result
 }
 
 func (se *StorageEngine) decodeCompressedInt64Column(data []byte, count int) []int64 {

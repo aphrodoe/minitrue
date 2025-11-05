@@ -53,7 +53,6 @@ func main() {
 		}
 	}
 
-	// Serial fallback - only compiled if !no_serial build tag is not set
 	c := &serial.Config{Name: *port, Baud: *baud}
 	s, err := serial.OpenPort(c)
 	if err != nil {
@@ -89,7 +88,3 @@ func main() {
 		log.Printf("serial read err: %v", err)
 	}
 }
-
-
-
-

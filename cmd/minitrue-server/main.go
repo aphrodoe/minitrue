@@ -26,17 +26,14 @@ func main() {
 
 	log.Printf("Starting node %s in mode=%s (broker=%s)", *nodeID, *mode, *broker)
 
-	// Ensure data directory exists
 	if err := os.MkdirAll(*dataDir, 0755); err != nil {
 		log.Fatalf("Failed to create data directory: %v", err)
 	}
 
-	// Initialize unified storage with Gorilla compression
 	storageFile := filepath.Join(*dataDir, fmt.Sprintf("%s.parq", *nodeID))
 	store := storage.NewUnifiedStorage(storageFile)
 	defer store.Close()
 
-	// MQTT client
 	mqttOpts := mqttclient.Options{
 		BrokerURL: *broker,
 		ClientID:  fmt.Sprintf("minitrue-%s-%d", *nodeID, time.Now().UnixNano()),
@@ -47,7 +44,6 @@ func main() {
 	}
 	defer mqttc.Close()
 
-	// Start services based on mode
 	switch *mode {
 	case "ingestion":
 		ing := ingestion.New(mqttc, store, *nodeID)
@@ -69,7 +65,6 @@ func main() {
 		log.Fatalf("Unknown mode: %s (must be: ingestion, query, or all)", *mode)
 	}
 
-	// Wait for shutdown signal
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
