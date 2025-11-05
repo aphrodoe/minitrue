@@ -50,7 +50,7 @@ func main() {
 		ing.Start()
 		log.Printf("[%s] Ingestion service started", *nodeID)
 	case "query":
-		q := query.New(mqttc, store)
+		q := query.NewWithNodeID(mqttc, store, *nodeID)
 		go q.StartHTTP(*port)
 		log.Printf("[%s] Query HTTP server running on :%d", *nodeID, *port)
 	case "all":
@@ -58,7 +58,7 @@ func main() {
 		ing.Start()
 		log.Printf("[%s] Ingestion service started", *nodeID)
 		
-		q := query.New(mqttc, store)
+		q := query.NewWithNodeID(mqttc, store, *nodeID)
 		go q.StartHTTP(*port)
 		log.Printf("[%s] Query HTTP server running on :%d", *nodeID, *port)
 	default:
