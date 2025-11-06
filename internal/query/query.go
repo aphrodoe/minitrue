@@ -13,7 +13,6 @@ import (
 	"github.com/minitrue/internal/cluster"
 	"github.com/minitrue/internal/mqttclient"
 	"github.com/minitrue/internal/storage"
-	"github.com/minitrue/internal/websocket"
 )
 
 type QueryRequest struct {
@@ -56,7 +55,6 @@ type Service struct {
 	store      storage.Storage
 	nodeID     string
 	httpClient *http.Client
-	wsHub      *websocket.Hub
 	restartFn  func()
 }
 
@@ -109,49 +107,12 @@ func (s *Service) StartHTTP(port int) {
 	http.HandleFunc("/query-aggregated", s.handleQueryAggregated)
 	http.HandleFunc("/delete", s.handleDelete)
 
-	if s.wsHub != nil {
-		http.HandleFunc("/ws", s.handleWebSocket)
-		http.HandleFunc("/ws/stats", s.handleWebSocketStats)
-		log.Printf("WebSocket available at ws://localhost:%d/ws", port)
-	}
-
-	addr := fmt.Sprintf(":%d", port)
+		addr := fmt.Sprintf(":%d", port)
 	log.Printf("Query HTTP listening on %s", addr)
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("http server error: %v", err)
 	}
-}
-
-func (s *Service) handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	if s.wsHub == nil {
-		http.Error(w, "WebSocket not available", http.StatusServiceUnavailable)
-		return
-	}
-	log.Printf("[WebSocket] New connection request from %s", r.RemoteAddr)
-	s.wsHub.ServeWS(w, r)
-}
-
-func (s *Service) handleWebSocketStats(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Content-Type", "application/json")
-
-	if s.wsHub == nil {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"connected_clients": 0,
-			"timestamp":         time.Now().Unix(),
-			"status":            "unavailable",
-		})
-		return
-	}
-
-	stats := map[string]interface{}{
-		"connected_clients": s.wsHub.GetClientCount(),
-		"timestamp":         time.Now().Unix(),
-		"status":            "active",
-	}
-
-	json.NewEncoder(w).Encode(stats)
 }
 
 func setCORS(w http.ResponseWriter, r *http.Request) bool {
@@ -415,3 +376,48 @@ func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) 
 	_ = json.NewEncoder(w).Encode(stats)
 }
 
+func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
+	if setCORS(w, r) {
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	var deleteReq struct {
+		DeviceID   string `json:"device_id"`
+		MetricName string `json:"metric_name"`
+	}
+	if err := json.Unmarshal(body, &deleteReq); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if deleteReq.DeviceID == "" || deleteReq.MetricName == "" {
+		http.Error(w, "missing device_id or metric_name", http.StatusBadRequest)
+		return
+	}
+
+	if err := s.store.Delete(deleteReq.DeviceID, deleteReq.MetricName); err != nil {
+		log.Printf("[Delete] Error deleting data: %v", err)
+		http.Error(w, "storage error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[Delete] Deleted all data for device=%s metric=%s", deleteReq.DeviceID, deleteReq.MetricName)
+
+	response := map[string]interface{}{
+		"message": fmt.Sprintf("Successfully deleted all data for device=%s metric=%s", deleteReq.DeviceID, deleteReq.MetricName),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
+}
