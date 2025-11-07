@@ -160,26 +160,26 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(out)
 }
 
-// distributedQuery queries all nodes in the cluster and aggregates results
+// distributedQuery queries only the nodes that should hold the data (primary + replicas)
 func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 	hashRing := cluster.GetHashRing()
 	if hashRing == nil {
 		return nil, fmt.Errorf("hash ring not initialized")
 	}
 
-	// Get all nodes that might have data for this device
-	// Since data can be replicated, we query all nodes to get complete results
-	allNodes := hashRing.GetAllNodes()
-	if len(allNodes) == 0 {
+	// Use same keying as ingestion to target the right nodes
+	key := qr.DeviceID + ":" + qr.MetricName
+	selectedNodes := cluster.GetNodesForKey(key, 2)
+	if len(selectedNodes) == 0 {
 		return nil, fmt.Errorf("no nodes in cluster")
 	}
 
-	log.Printf("[Query] Querying %d nodes for device=%s metric=%s", len(allNodes), qr.DeviceID, qr.MetricName)
+	log.Printf("[Query] Querying %d nodes for device=%s metric=%s", len(selectedNodes), qr.DeviceID, qr.MetricName)
 
-	// Query all nodes concurrently
+	// Query nodes concurrently
 	var wg sync.WaitGroup
-	resultChan := make(chan []float64, len(allNodes)+1)
-	errorChan := make(chan error, len(allNodes)+1)
+	resultChan := make(chan []float64, len(selectedNodes)+1)
+	errorChan := make(chan error, len(selectedNodes)+1)
 
 	// Query local node first
 	wg.Add(1)
@@ -197,7 +197,7 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 	}()
 
 	// Query remote nodes
-	for _, nodeID := range allNodes {
+	for _, nodeID := range selectedNodes {
 		// Skip local node if it's in the list
 		if s.nodeID != "" && nodeID == s.nodeID {
 			continue
@@ -232,7 +232,7 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 		return nil, fmt.Errorf("all queries failed")
 	}
 
-	log.Printf("[Query] Aggregated %d samples from %d nodes", len(allSamples), len(allNodes)+1)
+	log.Printf("[Query] Aggregated %d samples from %d candidate nodes", len(allSamples), len(selectedNodes))
 	return allSamples, nil
 }
 
