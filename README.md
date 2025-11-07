@@ -72,17 +72,17 @@ Or manually start nodes:
 
 **Terminal 1 - Node 1 (Ingestion + Query):**
 ```bash
-go run ./cmd/minitrue-server/main.go --mode=all --node_id=ing1 --port=8080
+go run cmd/minitrue-server/main.go -mode=all -node_id=ing1
 ```
 
 **Terminal 2 - Node 2 (Ingestion only):**
 ```bash
-go run ./cmd/minitrue-server/main.go --mode=ingestion --node_id=ing2
+go run cmd/minitrue-server/main.go -mode=all -node_id=ing2 -seeds=localhost:9000
 ```
 
 **Terminal 3 - Node 3 (Ingestion only):**
 ```bash
-go run ./cmd/minitrue-server/main.go --mode=ingestion --node_id=ing3
+go run ./cmd/minitrue-server/main.go --mode=all --node_id=ing3 -seeds=localhost:9000
 ```
 
 **Terminal 4 - Publisher:**

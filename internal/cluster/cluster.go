@@ -12,11 +12,6 @@ var (
 func init() {
 	// Initialize the consistent hash ring with default virtual nodes
 	hashRing = cluster.NewConsistentHashRing(150)
-	
-	// Add default nodes (these can be overridden by gossip protocol)
-	hashRing.AddNode("ing1")
-	hashRing.AddNode("ing2")
-	hashRing.AddNode("ing3")
 }
 
 // GetPrimaryNode returns the node id (string) that is the PRIMARY for a given deviceID.
@@ -28,6 +23,16 @@ func GetPrimaryNode(deviceID string) string {
 		return "ing1"
 	}
 	return node
+}
+
+// GetNodesForKey returns an ordered list of nodes (primary first) for a key.
+// The list length will be up to replicationFactor, bounded by ring size.
+func GetNodesForKey(key string, replicationFactor int) []string {
+	nodes, err := hashRing.GetNodes(key, replicationFactor)
+	if err != nil || len(nodes) == 0 {
+		return []string{"ing1"}
+	}
+	return nodes
 }
 
 // GetHashRing returns the global hash ring instance (for cluster management)

@@ -91,9 +91,18 @@ func (cm *ClusterManager) Initialize(localNode *models.NodeInfo, tcpPort int, se
 
 // onNodeUpdate is called when nodes are added or removed
 func (cm *ClusterManager) onNodeUpdate(nodeID string, add bool) {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	if cm.hashRing == nil {
+		return
+	}
+
 	if add {
+		cm.hashRing.AddNode(nodeID)
 		log.Printf("[Cluster] Node %s added to hash ring", nodeID)
 	} else {
+		cm.hashRing.RemoveNode(nodeID)
 		log.Printf("[Cluster] Node %s removed from hash ring", nodeID)
 	}
 }

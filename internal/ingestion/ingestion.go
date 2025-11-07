@@ -11,6 +11,9 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+// DataPoint represents a single measurement from a device
+// The combination of DeviceID and MetricName will be used to distribute primaries across nodes
+// to avoid one node being primary for all data of a device.
 type DataPoint struct {
 	DeviceID   string  `json:"device_id"`
 	MetricName string  `json:"metric_name"`
@@ -48,19 +51,33 @@ func (s *Service) handle(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	primaryNode := cluster.GetPrimaryNode(p.DeviceID)
+	// Use a composite key so primary selection is balanced across metrics
+	key := p.DeviceID + ":" + p.MetricName
+	nodes := cluster.GetNodesForKey(key, 2)
+	primaryNode := nodes[0]
+
 	if primaryNode == s.nodeID {
 		if err := s.store.PersistPrimary(p); err != nil {
 			log.Printf("[%s][ingestion] PersistPrimary error: %v", s.nodeID, err)
 			return
 		}
 		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %v", s.nodeID, p.DeviceID, p.MetricName, p.Value)
-	} else {
-		if err := s.store.PersistReplica(p); err != nil {
-			log.Printf("[%s][ingestion] PersistReplica error: %v", s.nodeID, err)
+		return
+	}
+
+	// If this node is one of the selected replicas, store as replica
+	if len(nodes) > 1 {
+		replicaNode := nodes[1]
+		if replicaNode == s.nodeID {
+			if err := s.store.PersistReplica(p); err != nil {
+				log.Printf("[%s][ingestion] PersistReplica error: %v", s.nodeID, err)
+				return
+			}
+			log.Printf("[%s][ingestion] REPLICA stored %s/%s = %v (primary=%s)", s.nodeID, p.DeviceID, p.MetricName, p.Value, primaryNode)
 			return
 		}
-		log.Printf("[%s][ingestion] REPLICA stored %s/%s = %v (primary=%s)", s.nodeID, p.DeviceID, p.MetricName, p.Value, primaryNode)
 	}
+
+	// Not primary nor selected replica for this key; ignore
 	_ = client
 }
