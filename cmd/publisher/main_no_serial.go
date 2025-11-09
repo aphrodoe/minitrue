@@ -28,22 +28,23 @@ func main() {
 	}
 	defer mqttc.Close()
 
-	devices := []string{"sensor_1", "sensor_2", "sensor_3"}
-	for {
-		did := devices[rand.Intn(len(devices))]
-		msg := map[string]interface{}{
-			"device_id":   did,
-			"metric_name": "temperature",
-			"timestamp":   time.Now().Unix(),
-			"value":       20.0 + rand.Float64()*10.0,
+	if *sim {
+		devices := []string{"sensor_1", "sensor_2", "sensor_3"}
+		for {
+			did := devices[rand.Intn(len(devices))]
+			msg := map[string]interface{}{
+				"device_id":   did,
+				"metric_name": "temperature",
+				"timestamp":   time.Now().Unix(),
+				"value":       20.0 + rand.Float64()*10.0,
+			}
+			b, _ := json.Marshal(msg)
+			if err := mqttc.Publish("iot/sensors/temperature", b, 0, false); err != nil {
+				log.Printf("publish err: %v", err)
+			} else {
+				log.Printf("published simulated %s -> %s", did, string(b))
+			}
+			time.Sleep(1 * time.Second)
 		}
-		b, _ := json.Marshal(msg)
-		if err := mqttc.Publish("iot/sensors/temperature", b, 0, false); err != nil {
-			log.Printf("publish err: %v", err)
-		} else {
-			log.Printf("published simulated %s -> %s", did, string(b))
-		}
-		time.Sleep(1 * time.Second)
 	}
 }
-
