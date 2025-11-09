@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/minitrue/internal/cluster"
+	"github.com/minitrue/internal/models"
 	"github.com/minitrue/internal/mqttclient"
 	"github.com/minitrue/internal/storage"
+	"github.com/minitrue/internal/websocket"
 )
 
 type QueryRequest struct {
@@ -51,11 +53,13 @@ func combineStats(stats []storage.QueryStats) storage.QueryStats {
 }
 
 type Service struct {
-	mqtt       *mqttclient.Client
-	store      storage.Storage
-	nodeID     string
-	httpClient *http.Client
-	restartFn  func()
+	mqtt                 *mqttclient.Client
+	store                storage.Storage
+	nodeID               string
+	httpClient           *http.Client
+	wsHub                *websocket.Hub
+	restartFn            func()
+	clusterStateProvider func() models.ClusterState
 }
 
 func New(m *mqttclient.Client, s storage.Storage) *Service {
@@ -67,8 +71,11 @@ func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Serv
 }
 
 func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, restartFn func()) *Service {
+	// Query-mode nodes do not start ingestion or persist MQTT messages. This
+	// separate client is a lightweight, read-only subscription used only to feed
+	// the real-time WebSocket monitor.
 	wsOpts := mqttclient.Options{
-		BrokerURL: "tcp://localhost:1883",
+		BrokerURL: m.BrokerURL(),
 		ClientID:  fmt.Sprintf("minitrue-ws-%s-%d", nodeID, time.Now().UnixNano()),
 	}
 	wsMqttClient, err := mqttclient.New(wsOpts)
@@ -81,8 +88,9 @@ func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, rest
 			httpClient: &http.Client{
 				Timeout: 5 * time.Second,
 			},
-			wsHub:     nil,
-			restartFn: restartFn,
+			wsHub:                nil,
+			restartFn:            restartFn,
+			clusterStateProvider: defaultClusterStateProvider,
 		}
 	}
 
@@ -96,9 +104,24 @@ func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, rest
 		httpClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		wsHub:     hub,
-		restartFn: restartFn,
+		wsHub:                hub,
+		restartFn:            restartFn,
+		clusterStateProvider: defaultClusterStateProvider,
 	}
+}
+
+func defaultClusterStateProvider() models.ClusterState {
+	clusterMgr := cluster.GetClusterManager()
+	if clusterMgr == nil {
+		return models.ClusterState{Nodes: make(map[string]*models.NodeInfo)}
+	}
+
+	gossipProtocol := clusterMgr.GetGossipProtocol()
+	if gossipProtocol == nil {
+		return models.ClusterState{Nodes: make(map[string]*models.NodeInfo)}
+	}
+
+	return gossipProtocol.GetClusterState()
 }
 
 func (s *Service) StartHTTP(port int) {
@@ -106,18 +129,65 @@ func (s *Service) StartHTTP(port int) {
 	http.HandleFunc("/query-samples", s.handleQuerySamples)
 	http.HandleFunc("/query-aggregated", s.handleQueryAggregated)
 	http.HandleFunc("/delete", s.handleDelete)
+	http.HandleFunc("/cluster/members", s.handleClusterMembers)
+	http.HandleFunc("/internal/digest", s.handleInternalDigest)
+	http.HandleFunc("/internal/sync", s.handleInternalSync)
+	http.HandleFunc("/internal/keys", s.handleInternalKeys)
 
-		addr := fmt.Sprintf(":%d", port)
+	if s.wsHub != nil {
+		http.HandleFunc("/ws", s.handleWebSocket)
+		http.HandleFunc("/ws/stats", s.handleWebSocketStats)
+		log.Printf("WebSocket available at ws://localhost:%d/ws", port)
+	}
+
+	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Query HTTP listening on %s", addr)
+
+	// Start background read-repair loop
+	s.StartReadRepairLoop()
+	
+	// Start migration hooks
+	s.StartMigrationHooks()
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("http server error: %v", err)
 	}
 }
 
+func (s *Service) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if s.wsHub == nil {
+		http.Error(w, "WebSocket not available", http.StatusServiceUnavailable)
+		return
+	}
+	log.Printf("[WebSocket] New connection request from %s", r.RemoteAddr)
+	s.wsHub.ServeWS(w, r)
+}
+
+func (s *Service) handleWebSocketStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
+	if s.wsHub == nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"connected_clients": 0,
+			"timestamp":         time.Now().Unix(),
+			"status":            "unavailable",
+		})
+		return
+	}
+
+	stats := map[string]interface{}{
+		"connected_clients": s.wsHub.GetClientCount(),
+		"timestamp":         time.Now().Unix(),
+		"status":            "active",
+	}
+
+	json.NewEncoder(w).Encode(stats)
+}
+
 func setCORS(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
 	if r.Method == "OPTIONS" {
@@ -125,6 +195,30 @@ func setCORS(w http.ResponseWriter, r *http.Request) bool {
 		return true
 	}
 	return false
+}
+
+func (s *Service) handleClusterMembers(w http.ResponseWriter, r *http.Request) {
+	if setCORS(w, r) {
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	provider := s.clusterStateProvider
+	if provider == nil {
+		provider = defaultClusterStateProvider
+	}
+
+	state := provider()
+	if state.Nodes == nil {
+		state.Nodes = make(map[string]*models.NodeInfo)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(state)
 }
 
 func parseQueryRequest(w http.ResponseWriter, r *http.Request) (QueryRequest, bool) {
