@@ -45,7 +45,7 @@ docker run -it -p 1883:1883 eclipse-mosquitto
 
 ```bash
 go mod download
-cd web && npm install && cd ..
+cd frontend && npm install && cd ..
 ```
 
 ### 2. Start MQTT Broker
@@ -75,12 +75,12 @@ Or manually start nodes:
 go run cmd/minitrue-server/main.go -mode=all -node_id=ing1
 ```
 
-**Terminal 2 - Node 2 (Ingestion only):**
+**Terminal 2 - Node 2 :**
 ```bash
 go run cmd/minitrue-server/main.go -mode=all -node_id=ing2 -seeds=localhost:9000
 ```
 
-**Terminal 3 - Node 3 (Ingestion only):**
+**Terminal 3 - Node 3 :**
 ```bash
 go run ./cmd/minitrue-server/main.go --mode=all --node_id=ing3 -seeds=localhost:9000
 ```
@@ -92,7 +92,7 @@ go run -tags=no_serial ./cmd/publisher/main_no_serial.go --sim=true
 
 **Terminal 5 - Frontend:**
 ```bash
-cd web
+cd frontend
 npm start
 ```
 

@@ -51,9 +51,41 @@ func (s *Service) handle(client mqtt.Client, msg mqtt.Message) {
 		return
 	}
 
-	// Use a composite key so primary selection is balanced across metrics
 	key := p.DeviceID + ":" + p.MetricName
+	
+	hashRing := cluster.GetHashRing()
+	if hashRing == nil {
+		log.Printf("[%s][ingestion] Hash ring nil, storing locally", s.nodeID)
+		if err := s.store.PersistPrimary(p); err != nil {
+			log.Printf("[%s][ingestion] PersistPrimary error: %v", s.nodeID, err)
+			return
+		}
+		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %.2f (hash ring nil)", s.nodeID, p.DeviceID, p.MetricName, p.Value)
+		return
+	}
+	
+	allNodes := hashRing.GetAllNodes()
+	if len(allNodes) == 0 {
+		log.Printf("[%s][ingestion] Hash ring empty, storing locally", s.nodeID)
+		if err := s.store.PersistPrimary(p); err != nil {
+			log.Printf("[%s][ingestion] PersistPrimary error: %v", s.nodeID, err)
+			return
+		}
+		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %.2f (ring empty)", s.nodeID, p.DeviceID, p.MetricName, p.Value)
+		return
+	}
+	
 	nodes := cluster.GetNodesForKey(key, 2)
+	if len(nodes) == 0 {
+		log.Printf("[%s][ingestion] GetNodesForKey returned empty, storing locally", s.nodeID)
+		if err := s.store.PersistPrimary(p); err != nil {
+			log.Printf("[%s][ingestion] PersistPrimary error: %v", s.nodeID, err)
+			return
+		}
+		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %.2f (no nodes for key)", s.nodeID, p.DeviceID, p.MetricName, p.Value)
+		return
+	}
+	
 	primaryNode := nodes[0]
 
 	if primaryNode == s.nodeID {
@@ -61,11 +93,10 @@ func (s *Service) handle(client mqtt.Client, msg mqtt.Message) {
 			log.Printf("[%s][ingestion] PersistPrimary error: %v", s.nodeID, err)
 			return
 		}
-		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %v", s.nodeID, p.DeviceID, p.MetricName, p.Value)
+		log.Printf("[%s][ingestion] PRIMARY stored %s/%s = %.2f", s.nodeID, p.DeviceID, p.MetricName, p.Value)
 		return
 	}
 
-	// If this node is one of the selected replicas, store as replica
 	if len(nodes) > 1 {
 		replicaNode := nodes[1]
 		if replicaNode == s.nodeID {
@@ -73,11 +104,10 @@ func (s *Service) handle(client mqtt.Client, msg mqtt.Message) {
 				log.Printf("[%s][ingestion] PersistReplica error: %v", s.nodeID, err)
 				return
 			}
-			log.Printf("[%s][ingestion] REPLICA stored %s/%s = %v (primary=%s)", s.nodeID, p.DeviceID, p.MetricName, p.Value, primaryNode)
+			log.Printf("[%s][ingestion] REPLICA stored %s/%s = %.2f (primary=%s)", s.nodeID, p.DeviceID, p.MetricName, p.Value, primaryNode)
 			return
 		}
 	}
 
-	// Not primary nor selected replica for this key; ignore
 	_ = client
 }

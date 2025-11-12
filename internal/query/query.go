@@ -13,6 +13,7 @@ import (
 	"github.com/minitrue/internal/cluster"
 	"github.com/minitrue/internal/mqttclient"
 	"github.com/minitrue/internal/storage"
+	"github.com/minitrue/internal/websocket"
 )
 
 type QueryRequest struct {
@@ -37,6 +38,7 @@ type Service struct {
 	store      storage.Storage
 	nodeID     string
 	httpClient *http.Client
+	wsHub      *websocket.Hub
 }
 
 func New(m *mqttclient.Client, s storage.Storage) *Service {
@@ -44,6 +46,27 @@ func New(m *mqttclient.Client, s storage.Storage) *Service {
 }
 
 func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Service {
+	wsOpts := mqttclient.Options{
+		BrokerURL: "tcp://localhost:1883",
+		ClientID:  fmt.Sprintf("minitrue-ws-%s-%d", nodeID, time.Now().UnixNano()),
+	}
+	wsMqttClient, err := mqttclient.New(wsOpts)
+	if err != nil {
+		log.Printf("[WebSocket] Failed to create MQTT client: %v", err)
+		return &Service{
+			mqtt:   m,
+			store:  s,
+			nodeID: nodeID,
+			httpClient: &http.Client{
+				Timeout: 5 * time.Second,
+			},
+			wsHub: nil,
+		}
+	}
+	
+	hub := websocket.NewHub(wsMqttClient)
+	go hub.Run()
+	
 	return &Service{
 		mqtt:   m,
 		store:  s,
@@ -51,17 +74,57 @@ func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Serv
 		httpClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
+		wsHub: hub,
 	}
 }
 
 func (s *Service) StartHTTP(port int) {
 	http.HandleFunc("/query", s.handleQuery)
 	http.HandleFunc("/query-samples", s.handleQuerySamples)
+	
+	if s.wsHub != nil {
+		http.HandleFunc("/ws", s.handleWebSocket)
+		http.HandleFunc("/ws/stats", s.handleWebSocketStats)
+		log.Printf("WebSocket available at ws://localhost:%d/ws", port)
+	}
+	
 	addr := fmt.Sprintf(":%d", port)
 	log.Printf("Query HTTP listening on %s", addr)
+	
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("http server error: %v", err)
 	}
+}
+
+func (s *Service) handleWebSocket(w http.ResponseWriter, r *http.Request) {
+	if s.wsHub == nil {
+		http.Error(w, "WebSocket not available", http.StatusServiceUnavailable)
+		return
+	}
+	log.Printf("[WebSocket] New connection request from %s", r.RemoteAddr)
+	s.wsHub.ServeWS(w, r)
+}
+
+func (s *Service) handleWebSocketStats(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+	
+	if s.wsHub == nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"connected_clients": 0,
+			"timestamp":         time.Now().Unix(),
+			"status":            "unavailable",
+		})
+		return
+	}
+	
+	stats := map[string]interface{}{
+		"connected_clients": s.wsHub.GetClientCount(),
+		"timestamp":         time.Now().Unix(),
+		"status":            "active",
+	}
+	
+	json.NewEncoder(w).Encode(stats)
 }
 
 func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
@@ -90,11 +153,9 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use distributed query to get samples from all nodes
 	samples, err := s.distributedQuery(qr)
 	if err != nil {
 		log.Printf("[Query] Distributed query error: %v, falling back to local", err)
-		// Fallback to local query
 		samples, err = s.store.Query(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
 		if err != nil {
 			http.Error(w, "storage error", http.StatusInternalServerError)

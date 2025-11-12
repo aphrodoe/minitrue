@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import QueryForm from './components/QueryForm';
 import QueryResults from './components/QueryResults';
+import RealTimeMonitor from './components/RealTimeMonitor';
 import GradientText from './components/GradientText';
 import Particles from './components/Particles';
 
@@ -9,6 +10,7 @@ function App() {
   const [queryResult, setQueryResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('query'); // 'query' or 'realtime'
 
   const handleQuery = async (queryData) => {
     setLoading(true);
@@ -56,24 +58,46 @@ function App() {
           disableRotation={false}
         />
       </div>
+      
       <GradientText>
         <h1>Minitrue</h1>
       </GradientText>
       <p className="shiny-text">Decentralized Time-Series Database Query Interface</p>
 
-      <QueryForm onSubmit={handleQuery} loading={loading} />
-      
-      {error && (
-        <div className="error-message">
-          <strong>Error:</strong> {error}
+      <div className="tabs">
+        <button
+          className={`tab-button ${activeTab === 'query' ? 'active' : ''}`}
+          onClick={() => setActiveTab('query')}
+        >
+          Query Data
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'realtime' ? 'active' : ''}`}
+          onClick={() => setActiveTab('realtime')}
+        >
+          Real-Time Monitor
+        </button>
+      </div>
+
+      <div className="tab-content">
+        <div style={{ display: activeTab === 'query' ? 'block' : 'none' }}>
+          <QueryForm onSubmit={handleQuery} loading={loading} />
+          
+          {error && (
+            <div className="error-message">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+
+          {queryResult && <QueryResults result={queryResult} />}
         </div>
-      )}
 
-      {queryResult && <QueryResults result={queryResult} />}
-
+        <div style={{ display: activeTab === 'realtime' ? 'block' : 'none' }}>
+          <RealTimeMonitor />
+        </div>
+      </div>
     </div>
   );
 }
 
 export default App;
-
