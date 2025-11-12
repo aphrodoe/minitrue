@@ -91,8 +91,7 @@ func (gp *GossipProtocol) sendGossip() {
     }
     gp.mu.Unlock()
 
-    // Select random nodes to gossip with
-    targets := gp.selectRandomNodes(3)
+    targets := gp.selectRandomActiveNodes(3)
 
     for _, nodeID := range targets {
         go gp.sendGossipToNode(nodeID, msg)
@@ -105,7 +104,7 @@ func (gp *GossipProtocol) sendGossipToNode(nodeID string, msg models.GossipMessa
     node, exists := gp.clusterState.Nodes[nodeID]
     gp.mu.RUnlock()
 
-    if !exists || node.ID == gp.localNode.ID {
+    if !exists || node.ID == gp.localNode.ID || node.Status == "down" {
         return
     }
 
@@ -162,14 +161,14 @@ func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
     }
 }
 
-// selectRandomNodes selects N random nodes from the cluster
-func (gp *GossipProtocol) selectRandomNodes(count int) []string {
+// selectRandomActiveNodes selects N random ACTIVE nodes from the cluster
+func (gp *GossipProtocol) selectRandomActiveNodes(count int) []string {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
 
     nodes := make([]string, 0, len(gp.clusterState.Nodes))
-    for nodeID := range gp.clusterState.Nodes {
-        if nodeID != gp.localNode.ID {
+    for nodeID, node := range gp.clusterState.Nodes {
+        if nodeID != gp.localNode.ID && node.Status == "active" {
             nodes = append(nodes, nodeID)
         }
     }
@@ -207,7 +206,6 @@ func (gp *GossipProtocol) detectFailures() {
     defer gp.mu.Unlock()
 
     now := time.Now()
-    nodesToRemove := make([]string, 0)
 
     for nodeID, node := range gp.clusterState.Nodes {
         if nodeID == gp.localNode.ID {
@@ -221,7 +219,6 @@ func (gp *GossipProtocol) detectFailures() {
                 log.Printf("[%s] Node %s marked as DOWN (no heartbeat for %v)", 
                           gp.localNode.ID, nodeID, timeSinceHeartbeat)
                 node.Status = "down"
-                nodesToRemove = append(nodesToRemove, nodeID)
             }
         } else if timeSinceHeartbeat > gp.interval*2 {
             if node.Status == "active" {
@@ -229,12 +226,6 @@ func (gp *GossipProtocol) detectFailures() {
                 node.Status = "suspect"
             }
         }
-    }
-
-    // Note: Actual removal from hash ring is handled by message handler
-    // This just marks them as down in cluster state
-    for _, nodeID := range nodesToRemove {
-        log.Printf("[%s] Node %s should be removed from hash ring", gp.localNode.ID, nodeID)
     }
 }
 

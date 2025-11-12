@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"sort"
 	"sync"
@@ -24,6 +25,8 @@ type UnifiedStorage struct {
 	filepath  string
 	batchSize int
 	batch     []models.Record
+	nodeID    string
+	lastFlush time.Time
 }
 
 type sample struct {
@@ -33,13 +36,40 @@ type sample struct {
 }
 
 func NewUnifiedStorage(filepath string) *UnifiedStorage {
-	return &UnifiedStorage{
+	nodeID := "unknown"
+	if len(filepath) > 5 {
+		nodeID = filepath[len(filepath)-9 : len(filepath)-5] 
+	}
+	
+	storage := &UnifiedStorage{
 		data:      make(map[string][]sample),
 		file:      nil,
 		engine:    NewStorageEngine(filepath),
 		filepath:  filepath,
-		batchSize: 1000,
-		batch:     make([]models.Record, 0, 1000),
+		batchSize: 10, // Reduced from 1000 for faster testing
+		batch:     make([]models.Record, 0, 10),
+		nodeID:    nodeID,
+		lastFlush: time.Now(),
+	}
+	
+	// Start periodic flush goroutine
+	go storage.periodicFlush()
+	
+	return storage
+}
+
+// periodicFlush flushes data every 5 seconds regardless of batch size
+func (m *UnifiedStorage) periodicFlush() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+	
+	for range ticker.C {
+		m.mu.Lock()
+		if len(m.batch) > 0 {
+			log.Printf("[Storage-%s] Periodic flush: %d records", m.nodeID, len(m.batch))
+			m.flushBatchUnlocked()
+		}
+		m.mu.Unlock()
 	}
 }
 
@@ -107,33 +137,35 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 			Value:     val,
 		})
 		if len(m.batch) >= m.batchSize {
-			go m.flushBatch()
+			log.Printf("[Storage-%s] Batch full: flushing %d records", m.nodeID, len(m.batch))
+			m.flushBatchUnlocked()
 		}
 	}
 	m.mu.Unlock()
 	return nil
 }
 
-func (m *UnifiedStorage) flushBatch() {
-	m.mu.Lock()
+func (m *UnifiedStorage) flushBatchUnlocked() {
 	if len(m.batch) == 0 {
-		m.mu.Unlock()
 		return
 	}
 	
 	batch := make([]models.Record, len(m.batch))
 	copy(batch, m.batch)
 	m.batch = m.batch[:0]
+	m.lastFlush = time.Now()
+	
+	// Release lock before doing I/O
 	m.mu.Unlock()
 	
 	// Sort batch by timestamp to ensure optimal Gorilla compression
-	// Gorilla compression uses delta-of-delta encoding which works best on sorted data
 	sort.Slice(batch, func(i, j int) bool {
 		return batch[i].Timestamp < batch[j].Timestamp
 	})
 	
 	existing, err := m.engine.Read()
 	if err != nil {
+		log.Printf("[Storage-%s] No existing data, starting fresh", m.nodeID)
 		existing = []models.Record{}
 	}
 	
@@ -144,9 +176,20 @@ func (m *UnifiedStorage) flushBatch() {
 	})
 	
 	if err := m.engine.Write(allRecords); err != nil {
-		_ = err
+		log.Printf("[Storage-%s] ERROR writing to disk: %v", m.nodeID, err)
+	} else {
+		log.Printf("[Storage-%s] Successfully wrote %d records to %s", m.nodeID, len(allRecords), m.filepath)
 	}
+	
+	// Re-acquire lock
+	m.mu.Lock()
 }
+
+// func (m *UnifiedStorage) flushBatch() {
+// 	m.mu.Lock()
+// 	defer m.mu.Unlock()
+// 	m.flushBatchUnlocked()
+// }
 
 // binarySearchStart finds the first index where timestamp >= start
 func binarySearchStart(arr []sample, start int64) int {
@@ -219,8 +262,10 @@ func (m *UnifiedStorage) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	
+	log.Printf("[Storage-%s] Closing storage, flushing remaining %d records", m.nodeID, len(m.batch))
+	
 	if len(m.batch) > 0 {
-		m.flushBatch()
+		m.flushBatchUnlocked()
 	}
 	
 	if m.file != nil {
