@@ -511,6 +511,10 @@ const QueryForm = ({ onSubmit, loading }) => {
       
       // Find position in formatted string with same number of digits/placeholders
       setTimeout(() => {
+        // Find where AM/PM section starts (before the space and AM/PM)
+        const ampmIndex = formatted.search(/\s+(AM|PM)$/i);
+        const maxPos = ampmIndex > 0 ? ampmIndex : formatted.length;
+        
         let pos = 0;
         let count = 0;
         for (let i = 0; i < formatted.length; i++) {
@@ -522,6 +526,10 @@ const QueryForm = ({ onSubmit, loading }) => {
               // Skip separators to get to next valid position
               while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                 pos++;
+              }
+              // Don't go beyond AM/PM section
+              if (pos >= maxPos) {
+                pos = maxPos;
               }
               break;
             }
@@ -539,12 +547,16 @@ const QueryForm = ({ onSubmit, loading }) => {
                 while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                   pos++;
                 }
+                // Don't go beyond AM/PM section
+                if (pos >= maxPos) {
+                  pos = maxPos;
+                }
                 break;
               }
             }
           }
           if (count < digitCount) {
-            pos = formatted.length;
+            pos = Math.min(formatted.length, maxPos);
           }
         }
         input.setSelectionRange(pos, pos);
@@ -574,28 +586,53 @@ const QueryForm = ({ onSubmit, loading }) => {
       
       // Find position in formatted string with same number of digits/placeholders
       setTimeout(() => {
+        // Find where AM/PM section starts (before the space and AM/PM)
+        const ampmIndex = formatted.search(/\s+(AM|PM)$/i);
+        const maxPos = ampmIndex > 0 ? ampmIndex : formatted.length;
+        
         let pos = 0;
         let count = 0;
         for (let i = 0; i < formatted.length; i++) {
           if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
             count++;
-            if (count > digitCount) {
-              pos = i;
-              break;
-            }
             if (count === digitCount) {
-              // Place cursor after this character
+              // Place cursor right after this character
               pos = i + 1;
-              // Skip separators
+              // Skip separators to get to next valid position
               while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                 pos++;
+              }
+              // Don't go beyond AM/PM section
+              if (pos >= maxPos) {
+                pos = maxPos;
               }
               break;
             }
           }
         }
-        if (count <= digitCount) {
-          pos = formatted.length;
+        // If we didn't find exact match, find the position where we have digitCount digits
+        if (count < digitCount) {
+          // Try to find where we should be based on digit count
+          count = 0;
+          for (let i = 0; i < formatted.length; i++) {
+            if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
+              count++;
+              if (count >= digitCount) {
+                pos = i + 1;
+                while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
+                  pos++;
+                }
+                // Don't go beyond AM/PM section
+                if (pos >= maxPos) {
+                  pos = maxPos;
+                }
+                break;
+              }
+            }
+          }
+          if (count < digitCount) {
+            pos = Math.min(formatted.length, maxPos);
+          }
         }
         input.setSelectionRange(pos, pos);
       }, 0);
@@ -638,6 +675,56 @@ const QueryForm = ({ onSubmit, loading }) => {
     }
     
     onSubmit(formData);
+  };
+
+  const handleDeleteAllData = async () => {
+    if (!formData.device_id || !formData.metric_name) {
+      alert('Please select Device ID and Metric Name before deleting data.');
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete ALL data for:\n\nDevice: ${formData.device_id}\nMetric: ${formData.metric_name}\n\nThis action cannot be undone!`;
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const response = await fetch('/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          device_id: formData.device_id,
+          metric_name: formData.metric_name,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || 'Delete failed');
+      }
+
+      const data = await response.json();
+      alert(`Success! ${data.message || 'Data deleted successfully.'}`);
+      
+      // Clear the form
+      setFormData({
+        device_id: '',
+        metric_name: '',
+        operation: 'avg',
+        start_time: 0,
+        end_time: 0,
+      });
+      setStartTimeDisplay('');
+      setEndTimeDisplay('');
+      setTimeError('');
+      setStartTimeError(null);
+      setEndTimeError(null);
+    } catch (err) {
+      alert(`Error: ${err.message || 'Failed to delete data'}`);
+      console.error('Delete error:', err);
+    }
   };
 
   const getCurrentUnixTime = () => {
@@ -922,9 +1009,27 @@ const QueryForm = ({ onSubmit, loading }) => {
           </div>
         )}
 
-        <button type="submit" disabled={loading || timeError} className="submit-btn">
-          {loading ? 'Querying...' : 'Run Query'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button type="submit" disabled={loading || timeError} className="submit-btn">
+            {loading ? 'Querying...' : 'Run Query'}
+          </button>
+          <button
+            type="button"
+            onClick={handleDeleteAllData}
+            disabled={!formData.device_id || !formData.metric_name || loading}
+            className="time-btn"
+            style={{
+              backgroundColor: 'transparent',
+              border: '1px solid #ff4444',
+              color: '#ff4444',
+              padding: '10px 20px',
+              cursor: (!formData.device_id || !formData.metric_name || loading) ? 'not-allowed' : 'pointer',
+              opacity: (!formData.device_id || !formData.metric_name || loading) ? 0.5 : 1,
+            }}
+          >
+            Delete All Data
+          </button>
+        </div>
       </form>
     </div>
   );

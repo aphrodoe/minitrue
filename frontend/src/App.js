@@ -89,6 +89,22 @@ function App() {
             </div>
           )}
 
+          {(queryResult || error) && (
+            <div style={{ marginTop: '12px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setQueryResult(null);
+                  setError(null);
+                }}
+                className="time-btn"
+                style={{ backgroundColor: 'transparent', border: '1px solid #ffffff', color: '#ffffff' }}
+              >
+                Clear Results
+              </button>
+            </div>
+          )}
+
           {queryResult && <QueryResults result={queryResult} />}
         </div>
 

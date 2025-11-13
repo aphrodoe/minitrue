@@ -16,6 +16,8 @@ type Storage interface {
 	PersistReplica(p interface{}) error
 	Query(deviceID, metric string, start, end int64) ([]float64, error)
 	QueryAggregated(deviceID, metric string, start, end int64) (QueryStats, error)
+	Delete(deviceID, metric string) error
+	Reload() error
 }
 
 type QueryStats struct {
@@ -241,8 +243,10 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 		arr, ok = m.data[key]
 		m.mu.Unlock()
 		if !ok || len(arr) == 0 {
+			log.Printf("[Storage-%s] Query for %s returned 0 points (key not found or empty)", m.nodeID, key)
 			return []float64{}, nil
 		}
+		log.Printf("[Storage-%s] Loaded %d points for %s from disk", m.nodeID, len(arr), key)
 	}
 
 	m.mu.RLock()
@@ -253,6 +257,12 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 
 	if start == 0 && end == 0 {
 		// Return all data
+		startIdx = 0
+		endIdx = len(arr) - 1
+	} else if start == 0 {
+		// Start from beginning (All Data case: start=0, end=now)
+		// When start=0, return ALL data regardless of end time
+		// This handles the "All Data" button which sets start=0, end=now
 		startIdx = 0
 		endIdx = len(arr) - 1
 	} else {
@@ -360,6 +370,7 @@ func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int
 }
 
 // loadFromDisk loads all sample data from the JSON file
+// If replace is true, it replaces existing data; otherwise it merges
 func (m *UnifiedStorage) loadFromDisk() {
 	data, err := os.ReadFile(m.dataFile)
 	if err != nil {
@@ -377,14 +388,20 @@ func (m *UnifiedStorage) loadFromDisk() {
 		return
 	}
 
-	// Merge with existing data, maintaining sorted order
-	for key, samples := range persistedData {
-		existing := m.data[key]
-		merged := append(existing, samples...)
-		sort.Slice(merged, func(i, j int) bool {
-			return merged[i].Timestamp < merged[j].Timestamp
-		})
-		m.data[key] = merged
+	// Replace existing data (used when reloading after deletion)
+	if len(m.data) == 0 {
+		// If data map is empty, just assign directly
+		m.data = persistedData
+	} else {
+		// Merge with existing data, maintaining sorted order
+		for key, samples := range persistedData {
+			existing := m.data[key]
+			merged := append(existing, samples...)
+			sort.Slice(merged, func(i, j int) bool {
+				return merged[i].Timestamp < merged[j].Timestamp
+			})
+			m.data[key] = merged
+		}
 	}
 
 	log.Printf("[Storage-%s] Loaded %d keys from disk", m.nodeID, len(persistedData))
@@ -427,6 +444,47 @@ func (m *UnifiedStorage) persistToJSONUnlocked() {
 
 	// Re-acquire lock
 	m.mu.Lock()
+}
+
+// Delete removes all data for a specific device_id and metric_name
+func (m *UnifiedStorage) Delete(deviceID, metric string) error {
+	key := deviceID + "|" + metric
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Remove from memory
+	delete(m.data, key)
+
+	// Note: The batch may contain records for this device/metric, but since we don't have
+	// device/metric info in the Record struct, we can't filter it here. The batch will
+	// be flushed normally, but the deleted data won't be in memory anymore, so it won't
+	// be persisted when we save to JSON.
+
+	// Persist the updated data to disk
+	m.persistToJSONUnlocked()
+
+	log.Printf("[Storage-%s] Deleted all data for device=%s metric=%s", m.nodeID, deviceID, metric)
+
+	// Reload from disk to ensure consistency
+	m.Reload()
+
+	return nil
+}
+
+// Reload reloads all data from disk, replacing in-memory data
+func (m *UnifiedStorage) Reload() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Clear existing data
+	m.data = make(map[string][]sample)
+
+	// Reload from disk
+	m.loadFromDisk()
+
+	log.Printf("[Storage-%s] Reloaded data from disk", m.nodeID)
+	return nil
 }
 
 func (m *UnifiedStorage) Close() error {
