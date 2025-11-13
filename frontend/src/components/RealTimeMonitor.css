@@ -148,6 +148,102 @@
   transform: translateY(-1px);
 }
 
+.visualize-btn {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.visualize-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.graph-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.temperature-graph {
+  width: 100%;
+  height: 400px;
+  display: block;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+}
+
+.sensor-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sensor-btn {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  color: rgba(255, 255, 255, 0.9);
+  min-width: 100px;
+}
+
+.sensor-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.sensor-btn.active {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.sensor-btn.sensor-1.active {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.6);
+  color: #4CAF50;
+  box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+}
+
+.sensor-btn.sensor-2.active {
+  background: rgba(33, 150, 243, 0.3);
+  border-color: rgba(33, 150, 243, 0.6);
+  color: #2196F3;
+  box-shadow: 0 0 15px rgba(33, 150, 243, 0.4);
+}
+
+.sensor-btn.sensor-3.active {
+  background: rgba(255, 152, 0, 0.3);
+  border-color: rgba(255, 152, 0, 0.6);
+  color: #FF9800;
+  box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+}
+
 .data-stream {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
@@ -293,7 +389,16 @@
   }
 
   .filter-input,
-  .clear-filter-btn {
+  .clear-filter-btn,
+  .visualize-btn {
+    width: 100%;
+  }
+
+  .sensor-selector {
+    flex-direction: column;
+  }
+
+  .sensor-btn {
     width: 100%;
   }
 
