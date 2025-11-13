@@ -15,6 +15,14 @@ type Storage interface {
 	PersistPrimary(p interface{}) error
 	PersistReplica(p interface{}) error
 	Query(deviceID, metric string, start, end int64) ([]float64, error)
+	QueryAggregated(deviceID, metric string, start, end int64) (QueryStats, error)
+}
+
+type QueryStats struct {
+	Sum   float64
+	Count int
+	Min   float64
+	Max   float64
 }
 
 type UnifiedStorage struct {
@@ -277,6 +285,78 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 	}
 
 	return res, nil
+}
+
+func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int64) (QueryStats, error) {
+	key := deviceID + "|" + metric
+	m.mu.RLock()
+	arr, ok := m.data[key]
+	m.mu.RUnlock()
+
+	// If not in memory, try loading from disk
+	if !ok || len(arr) == 0 {
+		m.mu.Lock()
+		m.loadFromDisk()
+		arr, ok = m.data[key]
+		m.mu.Unlock()
+		if !ok || len(arr) == 0 {
+			return QueryStats{}, nil
+		}
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	// Optimized query using binary search for time range
+	var startIdx, endIdx int
+
+	if start == 0 && end == 0 {
+		// Return all data
+		startIdx = 0
+		endIdx = len(arr) - 1
+	} else {
+		// Find range boundaries using binary search
+		startIdx = binarySearchStart(arr, start)
+		if startIdx >= len(arr) {
+			// No data in range
+			return QueryStats{}, nil
+		}
+
+		if end == 0 {
+			// No end time specified, return everything from start to end
+			endIdx = len(arr) - 1
+		} else {
+			endIdx = binarySearchEnd(arr, end)
+			if endIdx < startIdx {
+				// No data in range
+				return QueryStats{}, nil
+			}
+		}
+	}
+
+	// Aggregate on the fly
+	var sum float64
+	var count int
+	var min, max float64
+	if endIdx >= startIdx {
+		min = arr[startIdx].Value
+		max = arr[startIdx].Value
+		sum = arr[startIdx].Value
+		count = 1
+		for i := startIdx + 1; i <= endIdx; i++ {
+			val := arr[i].Value
+			sum += val
+			count++
+			if val < min {
+				min = val
+			}
+			if val > max {
+				max = val
+			}
+		}
+	}
+
+	return QueryStats{Sum: sum, Count: count, Min: min, Max: max}, nil
 }
 
 // loadFromDisk loads all sample data from the JSON file
