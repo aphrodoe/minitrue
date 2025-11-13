@@ -86,7 +86,54 @@ func (cm *ClusterManager) Initialize(localNode *models.NodeInfo, tcpPort int, se
 		}
 	}
 
+	// Start periodic hash ring sync with gossip state
+	go cm.syncHashRingLoop()
+
 	return nil
+}
+
+// syncHashRingLoop periodically syncs the hash ring with the gossip cluster state
+func (cm *ClusterManager) syncHashRingLoop() {
+	ticker := time.NewTicker(3 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		cm.syncHashRing()
+	}
+}
+
+// syncHashRing updates the hash ring to match the current gossip cluster state
+func (cm *ClusterManager) syncHashRing() {
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+
+	if cm.gossipProtocol == nil || cm.hashRing == nil {
+		return
+	}
+
+	// Get current cluster state from gossip
+	clusterState := cm.gossipProtocol.GetClusterState()
+	
+	// Get current nodes in hash ring
+	ringNodes := make(map[string]bool)
+	for _, nodeID := range cm.hashRing.GetAllNodes() {
+		ringNodes[nodeID] = true
+	}
+
+	// Update hash ring based on cluster state
+	for nodeID, nodeInfo := range clusterState.Nodes {
+		if nodeInfo.Status == "active" && !ringNodes[nodeID] {
+			// Node is active but not in ring - add it
+			cm.hashRing.AddNode(nodeID)
+			log.Printf("[Cluster] Synced: Added node %s to hash ring", nodeID)
+			ringNodes[nodeID] = true
+		} else if nodeInfo.Status == "down" && ringNodes[nodeID] {
+			// Node is down but still in ring - remove it
+			cm.hashRing.RemoveNode(nodeID)
+			log.Printf("[Cluster] Synced: Removed node %s from hash ring (down)", nodeID)
+			delete(ringNodes, nodeID)
+		}
+	}
 }
 
 // onNodeUpdate is called when nodes are added or removed

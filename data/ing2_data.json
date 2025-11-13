@@ -1,0 +1,3733 @@
+{
+  "sensor_1|temperature": [
+    {
+      "timestamp": 1763049732,
+      "value": 21.275314337795564,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049741,
+      "value": 20.40039984799949,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049743,
+      "value": 25.67341590253786,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049749,
+      "value": 25.12186788515739,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049750,
+      "value": 22.939421331125377,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049753,
+      "value": 24.121398176507228,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049754,
+      "value": 28.799846335653434,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049756,
+      "value": 22.910596369009042,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049757,
+      "value": 20.818274229001897,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049761,
+      "value": 28.360350331669938,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049764,
+      "value": 29.126138223720996,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049767,
+      "value": 28.640673968781964,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049770,
+      "value": 24.64017682507882,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049771,
+      "value": 23.52515221471804,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049773,
+      "value": 21.204274436291662,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049778,
+      "value": 22.883684688233735,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049787,
+      "value": 25.462180301356724,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049790,
+      "value": 29.30289065731359,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049793,
+      "value": 20.97884337803534,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049797,
+      "value": 27.22777085606856,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049808,
+      "value": 20.60346086843189,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049810,
+      "value": 27.39756059921178,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049812,
+      "value": 26.397092103384203,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049814,
+      "value": 27.236539369871608,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049815,
+      "value": 25.23630679572379,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049816,
+      "value": 22.655096274346736,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049820,
+      "value": 23.111249643854727,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049823,
+      "value": 29.526451108840497,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049825,
+      "value": 26.339917914494876,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049831,
+      "value": 26.54533654432795,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049832,
+      "value": 24.289173260273902,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049834,
+      "value": 20.1347513695166,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049841,
+      "value": 22.09165073568227,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049842,
+      "value": 21.739063912862438,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049845,
+      "value": 25.696174470335695,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049848,
+      "value": 26.491976064228044,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049851,
+      "value": 21.18494357323943,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049855,
+      "value": 22.557316150507702,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049858,
+      "value": 28.07913552539918,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049859,
+      "value": 24.494074588264102,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049862,
+      "value": 28.119766048607765,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049867,
+      "value": 20.633565755036326,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049868,
+      "value": 28.719181008621906,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049870,
+      "value": 23.164015301457795,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049874,
+      "value": 24.42968706034699,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049877,
+      "value": 22.265554137861876,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049878,
+      "value": 22.725323595352375,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049883,
+      "value": 21.643743557236117,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049885,
+      "value": 20.703556072735953,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049888,
+      "value": 22.992771506281336,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049898,
+      "value": 22.861976355038642,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049900,
+      "value": 25.769596366723185,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049902,
+      "value": 21.34321120458058,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049903,
+      "value": 27.14637877037526,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049907,
+      "value": 23.893789223448376,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049908,
+      "value": 27.998283168491334,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049916,
+      "value": 20.255283190518686,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049922,
+      "value": 20.23724047112613,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049924,
+      "value": 26.840349204913363,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049927,
+      "value": 26.786476934459284,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049929,
+      "value": 24.262744624903743,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052423,
+      "value": 23.997310822265668,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052435,
+      "value": 24.174583810732752,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052438,
+      "value": 24.897524727769778,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052440,
+      "value": 22.85493400740029,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052444,
+      "value": 26.20244194328999,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052445,
+      "value": 26.067934219296227,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052452,
+      "value": 27.320904383344917,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052455,
+      "value": 24.545799870513335,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052456,
+      "value": 25.929776643791882,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052459,
+      "value": 25.764593721832696,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052462,
+      "value": 24.093802390019338,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052467,
+      "value": 23.96257287126197,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052469,
+      "value": 27.75258890790947,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052470,
+      "value": 27.72496662097685,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052472,
+      "value": 26.64104915508092,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052474,
+      "value": 28.95776683340787,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052476,
+      "value": 27.866597995137273,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052477,
+      "value": 28.83074438640034,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052481,
+      "value": 24.847945008344187,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052486,
+      "value": 21.17820745308034,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052488,
+      "value": 28.54289471448983,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052489,
+      "value": 26.646715694943566,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052490,
+      "value": 24.150106521700174,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052491,
+      "value": 24.599799640392423,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052496,
+      "value": 28.970034845147907,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052498,
+      "value": 22.31862126199005,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052499,
+      "value": 20.207574826292486,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052503,
+      "value": 22.01988597878377,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052510,
+      "value": 27.84992582261627,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052511,
+      "value": 26.742598722150937,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052522,
+      "value": 23.136630507340026,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052531,
+      "value": 25.829384170335768,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052535,
+      "value": 23.260539075216517,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052536,
+      "value": 20.819906326621968,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052537,
+      "value": 23.795215361113307,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052538,
+      "value": 23.889185705276333,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052542,
+      "value": 22.559822936477804,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052546,
+      "value": 29.73502732613629,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052548,
+      "value": 21.321643000626967,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052550,
+      "value": 21.62616690159644,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052551,
+      "value": 25.28893917950316,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052552,
+      "value": 29.1652411932443,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052554,
+      "value": 28.41275908579951,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052556,
+      "value": 26.590590296605647,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052560,
+      "value": 23.586878680421293,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052562,
+      "value": 29.051041459493256,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052574,
+      "value": 24.824800912201322,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052584,
+      "value": 24.875071197318498,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052589,
+      "value": 25.992149229022953,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052590,
+      "value": 27.2859118846092,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052595,
+      "value": 23.226923297300413,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052600,
+      "value": 20.406364222211533,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052601,
+      "value": 29.69933735529531,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052602,
+      "value": 21.376145118886747,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052603,
+      "value": 24.45881922359945,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052609,
+      "value": 22.492151392413632,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052612,
+      "value": 20.816783482612042,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052615,
+      "value": 27.652517462377503,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052619,
+      "value": 23.971540518954395,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052621,
+      "value": 23.481002521618297,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052623,
+      "value": 28.320559283571747,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052627,
+      "value": 24.71602233164466,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052754,
+      "value": 28.017356989088167,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052756,
+      "value": 25.55152843823529,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052757,
+      "value": 26.456000652930854,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052762,
+      "value": 29.755275075226386,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052764,
+      "value": 22.666663853692295,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052765,
+      "value": 27.854158487042778,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053232,
+      "value": 29.62376060433069,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053233,
+      "value": 25.837967411130634,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053239,
+      "value": 28.39648378029223,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053242,
+      "value": 20.94381467990292,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053243,
+      "value": 23.718079559795154,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053250,
+      "value": 22.001166055481047,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053253,
+      "value": 22.16965374366688,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053254,
+      "value": 24.74934533893695,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053256,
+      "value": 22.841476938387554,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053257,
+      "value": 29.539444324813353,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053258,
+      "value": 22.29511602596853,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053261,
+      "value": 23.302904856631177,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053262,
+      "value": 28.634543111648078,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053263,
+      "value": 24.038952970305274,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053265,
+      "value": 29.60282047620169,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053266,
+      "value": 23.399252185916982,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053267,
+      "value": 28.61575076334578,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053270,
+      "value": 25.4661630009053,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053271,
+      "value": 23.65620328148865,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053272,
+      "value": 26.006628778139365,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053273,
+      "value": 24.08987771500455,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053290,
+      "value": 25.15613880365261,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053292,
+      "value": 23.644400601613132,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053293,
+      "value": 27.68191364037759,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053296,
+      "value": 20.27609273522528,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053299,
+      "value": 20.27255783460153,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053302,
+      "value": 27.631904464253918,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053304,
+      "value": 26.242014427905037,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053305,
+      "value": 21.369379671777626,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053306,
+      "value": 22.072803971793192,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053307,
+      "value": 20.696300069088387,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053308,
+      "value": 25.383886834529203,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053314,
+      "value": 20.301580263116968,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053318,
+      "value": 25.067867993733728,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053320,
+      "value": 27.93637773338083,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053332,
+      "value": 23.390611665173687,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053335,
+      "value": 23.74956539936216,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053339,
+      "value": 22.80666900040097,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053341,
+      "value": 25.193369867419705,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053343,
+      "value": 26.970166875299842,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053346,
+      "value": 20.219470180135012,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053348,
+      "value": 25.78631304758502,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053351,
+      "value": 24.441013677434462,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053352,
+      "value": 26.13350484578946,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053353,
+      "value": 29.352990258650543,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053356,
+      "value": 23.179568305826816,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053357,
+      "value": 29.936033014077683,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053359,
+      "value": 26.070308102629426,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053363,
+      "value": 26.010358861568452,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053367,
+      "value": 29.003110571169266,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053368,
+      "value": 26.697506378791406,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053369,
+      "value": 24.564246889536957,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053372,
+      "value": 27.40955237791499,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053379,
+      "value": 21.49416129978595,
+      "role": "replica"
+    }
+  ],
+  "sensor_2|temperature": [
+    {
+      "timestamp": 1763049734,
+      "value": 24.64201377035169,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049735,
+      "value": 23.884511107442936,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049737,
+      "value": 29.259526083159784,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049738,
+      "value": 25.418355364566885,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049747,
+      "value": 20.654800523843083,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049748,
+      "value": 27.12024351673098,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049751,
+      "value": 26.512017259295266,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049755,
+      "value": 26.885256207522453,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049758,
+      "value": 28.90603526814995,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049759,
+      "value": 22.1384232639271,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049765,
+      "value": 21.676231938053355,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049768,
+      "value": 22.01065201773528,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049769,
+      "value": 28.390115769204343,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049772,
+      "value": 25.20952524307512,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049781,
+      "value": 21.28778677766079,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049782,
+      "value": 29.840056085668117,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049783,
+      "value": 21.493578107168066,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049788,
+      "value": 27.00449395736948,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049789,
+      "value": 23.216612472959323,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049794,
+      "value": 21.789488635984835,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049796,
+      "value": 21.956252156853317,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049798,
+      "value": 29.975250253322876,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049800,
+      "value": 25.08533556084135,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049801,
+      "value": 23.764769944084463,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049802,
+      "value": 27.68706498436309,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049804,
+      "value": 26.61565256122141,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049805,
+      "value": 27.907872969312738,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049806,
+      "value": 25.682143446248528,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049817,
+      "value": 21.90609299646975,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049818,
+      "value": 23.361826245683364,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049819,
+      "value": 29.385072513833727,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049822,
+      "value": 22.829801887712627,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049824,
+      "value": 29.363422561608854,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049826,
+      "value": 23.351166138780837,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049828,
+      "value": 24.420904839598823,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049830,
+      "value": 24.82947794010049,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049835,
+      "value": 23.041772200211682,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049836,
+      "value": 28.235892791862273,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049837,
+      "value": 24.863175816756335,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049838,
+      "value": 26.514682933041296,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049839,
+      "value": 28.799810768249248,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049843,
+      "value": 23.487936350804432,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049844,
+      "value": 26.863856088535552,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049849,
+      "value": 25.416358301065024,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049850,
+      "value": 28.231918695983758,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049852,
+      "value": 28.841113428431886,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049854,
+      "value": 21.387890736051123,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049857,
+      "value": 23.440764706553377,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049861,
+      "value": 26.61597732846671,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049863,
+      "value": 29.567119099942335,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049866,
+      "value": 24.831255019687447,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049869,
+      "value": 25.031931961275827,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049875,
+      "value": 20.32075164091193,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049879,
+      "value": 28.976956993646688,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049880,
+      "value": 26.929636720721163,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049881,
+      "value": 25.711422601170852,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049882,
+      "value": 21.577256371777878,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049884,
+      "value": 29.01145630484024,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049889,
+      "value": 24.545240122602287,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049890,
+      "value": 27.77039227552184,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049891,
+      "value": 28.279785890480607,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049892,
+      "value": 25.006205385484392,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049893,
+      "value": 29.682159371740696,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049897,
+      "value": 22.72865874661443,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049901,
+      "value": 24.782413182044998,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049904,
+      "value": 25.326231708894348,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049910,
+      "value": 25.179352100032446,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049914,
+      "value": 23.026789968251745,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049915,
+      "value": 27.79481696202481,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049918,
+      "value": 29.58482946448747,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049919,
+      "value": 21.504431843280898,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049923,
+      "value": 23.670054541986882,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763049926,
+      "value": 26.463528872986043,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052415,
+      "value": 29.195653295116237,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052417,
+      "value": 25.652695196372672,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052418,
+      "value": 22.454332793987593,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052422,
+      "value": 29.143604998890257,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052424,
+      "value": 23.693469743721906,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052425,
+      "value": 29.954535867794505,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052426,
+      "value": 28.54664643376969,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052427,
+      "value": 26.568439361326437,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052431,
+      "value": 20.029163881441765,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052433,
+      "value": 20.552776291563713,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052434,
+      "value": 27.52558520711072,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052436,
+      "value": 25.264852106331592,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052442,
+      "value": 25.60794728512783,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052446,
+      "value": 28.232853217809673,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052447,
+      "value": 26.625095496827168,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052448,
+      "value": 28.754944055277623,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052450,
+      "value": 26.896988505003858,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052451,
+      "value": 27.188133366187817,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052453,
+      "value": 27.03328696668229,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052454,
+      "value": 27.528375245388002,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052457,
+      "value": 28.168174998868533,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052458,
+      "value": 29.758040479609335,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052461,
+      "value": 22.279357219613008,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052463,
+      "value": 25.765128501097344,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052465,
+      "value": 23.400257485482783,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052471,
+      "value": 28.18127858170427,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052475,
+      "value": 21.516381853577688,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052480,
+      "value": 22.12055763448143,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052482,
+      "value": 21.502380876385793,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052484,
+      "value": 21.933837376396017,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052487,
+      "value": 22.803544280501747,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052492,
+      "value": 23.97856407778438,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052493,
+      "value": 21.4624998608809,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052495,
+      "value": 23.569189177314115,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052497,
+      "value": 25.62100669774625,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052500,
+      "value": 25.11880761742154,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052501,
+      "value": 27.19237233371508,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052502,
+      "value": 25.578910640078306,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052504,
+      "value": 27.103824409924492,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052508,
+      "value": 27.165470932825738,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052509,
+      "value": 29.243112400962467,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052512,
+      "value": 26.58137817442446,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052513,
+      "value": 26.841920156541285,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052514,
+      "value": 26.66641903897399,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052515,
+      "value": 24.623867126196867,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052516,
+      "value": 24.532316274334057,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052519,
+      "value": 29.388211003389294,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052521,
+      "value": 23.525414188761978,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052523,
+      "value": 29.102451384278766,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052525,
+      "value": 24.65316293744115,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052526,
+      "value": 20.315236284822102,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052528,
+      "value": 21.486207037415625,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052530,
+      "value": 28.249060750401462,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052534,
+      "value": 26.89832023525069,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052539,
+      "value": 29.282016383749703,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052541,
+      "value": 29.713893443020396,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052547,
+      "value": 26.626719078523514,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052549,
+      "value": 27.01360884647846,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052553,
+      "value": 24.506602793607176,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052555,
+      "value": 20.841678486438408,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052561,
+      "value": 29.516865149780802,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052565,
+      "value": 28.944139588067678,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052567,
+      "value": 26.043909943393942,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052570,
+      "value": 23.15014973615377,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052573,
+      "value": 29.59388368593504,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052576,
+      "value": 24.31525417056319,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052578,
+      "value": 28.21827583319516,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052580,
+      "value": 24.759131701888702,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052582,
+      "value": 21.404320278909356,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052583,
+      "value": 28.122980202147932,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052585,
+      "value": 23.395898129159917,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052587,
+      "value": 28.105279364134585,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052588,
+      "value": 22.738072452861537,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052606,
+      "value": 24.601197766086013,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052607,
+      "value": 21.487921201888202,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052608,
+      "value": 21.873098218084003,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052610,
+      "value": 27.69125981714485,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052611,
+      "value": 25.33766513556624,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052614,
+      "value": 28.387430162803245,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052617,
+      "value": 25.965149521480456,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052620,
+      "value": 22.55010617720391,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052626,
+      "value": 20.522396428269158,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052628,
+      "value": 25.279534637131817,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052629,
+      "value": 20.051108344803726,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052630,
+      "value": 25.522261682113204,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052758,
+      "value": 27.593236575100697,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763052761,
+      "value": 24.62509348330474,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053235,
+      "value": 29.926328205535224,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053237,
+      "value": 22.935827231032366,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053238,
+      "value": 23.470391960782386,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053240,
+      "value": 28.958433464335123,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053244,
+      "value": 22.787043548478596,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053246,
+      "value": 24.28767234007801,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053248,
+      "value": 26.753001629698645,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053255,
+      "value": 20.499641849957005,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053260,
+      "value": 23.21070798552248,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053264,
+      "value": 26.736189312466095,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053268,
+      "value": 26.284227347844205,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053269,
+      "value": 28.5302781911176,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053275,
+      "value": 20.58676519451536,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053276,
+      "value": 25.762457251201262,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053277,
+      "value": 28.542902060809144,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053281,
+      "value": 26.93789240963501,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053282,
+      "value": 25.03633445955104,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053283,
+      "value": 24.576057205305396,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053284,
+      "value": 21.977552152858447,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053285,
+      "value": 25.67728476133483,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053286,
+      "value": 24.60262847035123,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053289,
+      "value": 20.057554535771157,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053291,
+      "value": 21.268661257897715,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053297,
+      "value": 28.5630200957154,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053309,
+      "value": 21.177824207011387,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053310,
+      "value": 24.202776174144923,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053311,
+      "value": 21.048988360686845,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053313,
+      "value": 24.522474626085994,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053316,
+      "value": 20.78952420781276,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053321,
+      "value": 25.750900649424985,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053322,
+      "value": 28.882361937178416,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053324,
+      "value": 24.70957023378851,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053328,
+      "value": 24.478869901436244,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053329,
+      "value": 21.283404038340613,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053330,
+      "value": 23.636660839957155,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053331,
+      "value": 20.85514473843257,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053337,
+      "value": 25.522697489397217,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053338,
+      "value": 28.35836959082082,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053340,
+      "value": 29.54451271618931,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053342,
+      "value": 24.341915579065805,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053344,
+      "value": 21.7462018990185,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053354,
+      "value": 20.283475603639616,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053358,
+      "value": 29.839273750543796,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053360,
+      "value": 29.306963565615728,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053361,
+      "value": 25.456528699646547,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053362,
+      "value": 25.599262576723056,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053365,
+      "value": 29.132827896510335,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053373,
+      "value": 29.34964165548668,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053375,
+      "value": 24.48747733970333,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053376,
+      "value": 23.407497854683495,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053377,
+      "value": 21.51434977292571,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053378,
+      "value": 28.91701255962698,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053380,
+      "value": 29.440284205397422,
+      "role": "replica"
+    },
+    {
+      "timestamp": 1763053381,
+      "value": 26.929554364306235,
+      "role": "replica"
+    }
+  ],
+  "sensor_3|temperature": [
+    {
+      "timestamp": 1763049733,
+      "value": 23.11714476176048,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049736,
+      "value": 23.53150050273316,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049739,
+      "value": 28.015766286359458,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049740,
+      "value": 20.904174780043096,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049742,
+      "value": 21.881040374746643,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049744,
+      "value": 20.21146468854427,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049745,
+      "value": 27.28896134683028,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049746,
+      "value": 25.99924237995098,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049752,
+      "value": 24.054292156418413,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049760,
+      "value": 25.450320748039292,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049762,
+      "value": 27.5439168574716,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049763,
+      "value": 27.503040460929405,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049766,
+      "value": 24.398009180004102,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049774,
+      "value": 25.691731863138042,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049775,
+      "value": 22.941179897347833,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049776,
+      "value": 26.324952020062064,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049777,
+      "value": 20.071954996195775,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049779,
+      "value": 25.58651407222268,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049780,
+      "value": 21.708602277859587,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049784,
+      "value": 28.446188245292472,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049785,
+      "value": 27.11121119685057,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049786,
+      "value": 27.74683728037505,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049791,
+      "value": 25.300539949210183,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049792,
+      "value": 23.362818934179327,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049795,
+      "value": 27.105495445412032,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049799,
+      "value": 29.268244588737215,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049803,
+      "value": 29.24796989815006,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049807,
+      "value": 23.692312666078088,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049809,
+      "value": 27.088822833810532,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049811,
+      "value": 28.084345127742907,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049813,
+      "value": 26.301805493490406,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049821,
+      "value": 29.35264131556527,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049827,
+      "value": 26.19464122182169,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049829,
+      "value": 26.772812918176843,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049833,
+      "value": 28.65965544231125,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049840,
+      "value": 29.804416305423686,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049846,
+      "value": 28.668705252064473,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049847,
+      "value": 23.721887331990146,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049853,
+      "value": 20.538255259027498,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049856,
+      "value": 21.192645718532386,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049860,
+      "value": 27.280103952388085,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049864,
+      "value": 21.175023339249318,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049865,
+      "value": 22.188955636611503,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049871,
+      "value": 26.039394602806208,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049872,
+      "value": 29.79408369360148,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049873,
+      "value": 21.896773951589367,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049876,
+      "value": 20.708926777054092,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049886,
+      "value": 23.952554187339942,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049887,
+      "value": 29.819126879848337,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049894,
+      "value": 29.7735438537289,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049895,
+      "value": 25.661529424783108,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049896,
+      "value": 24.623885818832264,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049899,
+      "value": 28.996730829215238,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049905,
+      "value": 20.34510342649537,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049906,
+      "value": 24.787650525975582,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049909,
+      "value": 22.15816529802907,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049911,
+      "value": 29.948543298516952,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049912,
+      "value": 21.07561782453748,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049913,
+      "value": 25.697533050405614,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049917,
+      "value": 20.97829780844934,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049920,
+      "value": 28.74788815268699,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049921,
+      "value": 20.667051124298844,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049925,
+      "value": 21.132047180258606,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049928,
+      "value": 23.965166920721988,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049930,
+      "value": 26.834957835511975,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049931,
+      "value": 20.811248789032344,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763049932,
+      "value": 21.932205532023826,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052416,
+      "value": 26.28780608727071,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052419,
+      "value": 28.768220156209253,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052420,
+      "value": 25.872969055326063,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052421,
+      "value": 27.455578225315726,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052428,
+      "value": 21.693522823917522,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052429,
+      "value": 28.47946927178028,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052430,
+      "value": 25.126852087339373,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052432,
+      "value": 22.599707639935563,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052437,
+      "value": 24.656637602240302,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052439,
+      "value": 20.266369085466113,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052441,
+      "value": 27.287819277963926,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052443,
+      "value": 20.219640944039313,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052449,
+      "value": 26.281935557089728,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052460,
+      "value": 22.45652899648958,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052464,
+      "value": 26.839799076302796,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052466,
+      "value": 24.16310442387749,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052468,
+      "value": 26.152688336695416,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052473,
+      "value": 26.19811102974627,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052478,
+      "value": 26.557577648588225,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052479,
+      "value": 22.62336958398367,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052483,
+      "value": 29.57463871329509,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052485,
+      "value": 28.456233344685092,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052494,
+      "value": 21.441291613078285,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052505,
+      "value": 29.901846275013,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052506,
+      "value": 29.594618630141234,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052507,
+      "value": 22.316614779502206,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052517,
+      "value": 25.8844708229869,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052518,
+      "value": 22.82364971767486,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052520,
+      "value": 21.79117507112511,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052524,
+      "value": 23.841202778225078,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052527,
+      "value": 28.288105841528456,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052529,
+      "value": 27.446136909587132,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052532,
+      "value": 29.435497859663656,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052533,
+      "value": 20.58530107457244,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052540,
+      "value": 20.278399492506452,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052543,
+      "value": 26.065449609091985,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052544,
+      "value": 24.740807214033406,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052545,
+      "value": 25.516788176332202,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052557,
+      "value": 22.617025249925028,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052558,
+      "value": 24.163377880031298,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052559,
+      "value": 20.341221447861855,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052563,
+      "value": 26.89805701513314,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052564,
+      "value": 27.96396262784646,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052566,
+      "value": 25.46975915398415,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052568,
+      "value": 27.03703621156677,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052569,
+      "value": 20.309788929138055,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052571,
+      "value": 24.42216861759793,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052572,
+      "value": 29.419670733519812,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052575,
+      "value": 24.144218045126042,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052577,
+      "value": 28.677095091349468,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052579,
+      "value": 21.082662321870412,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052581,
+      "value": 29.184267441511036,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052586,
+      "value": 25.023798741223345,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052591,
+      "value": 26.122096341630325,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052592,
+      "value": 24.184021639321042,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052593,
+      "value": 27.435349898972806,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052594,
+      "value": 25.43493706530033,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052596,
+      "value": 25.65237977419293,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052597,
+      "value": 26.24670697844615,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052598,
+      "value": 23.48239661386951,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052599,
+      "value": 26.308975626910698,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052604,
+      "value": 28.056605115204498,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052605,
+      "value": 23.697840871715457,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052613,
+      "value": 20.937941523832258,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052616,
+      "value": 26.055594351860996,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052618,
+      "value": 23.27241735578874,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052622,
+      "value": 22.167076837020964,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052624,
+      "value": 26.93990114415151,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052625,
+      "value": 23.72807983145664,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052755,
+      "value": 25.454627393468655,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052759,
+      "value": 26.304305837349208,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052760,
+      "value": 26.92678863152243,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052763,
+      "value": 26.799683523992545,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052768,
+      "value": 20.871397742594528,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052769,
+      "value": 29.33438979992527,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052775,
+      "value": 25.900439884487163,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052778,
+      "value": 24.388959518676405,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052780,
+      "value": 29.40235759517432,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052782,
+      "value": 27.875729701900426,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052783,
+      "value": 29.606589783899114,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052784,
+      "value": 27.40371086312831,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052797,
+      "value": 25.55038931432415,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052800,
+      "value": 24.165493098546555,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052807,
+      "value": 23.809244379779617,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052817,
+      "value": 25.658057309388713,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052818,
+      "value": 23.343885210296502,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052821,
+      "value": 27.098451452864126,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052824,
+      "value": 24.69701406440173,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052826,
+      "value": 28.129200262110665,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052827,
+      "value": 27.19153385096525,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052829,
+      "value": 29.19778727984642,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052830,
+      "value": 23.981331048610578,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052835,
+      "value": 20.828324882781118,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052840,
+      "value": 23.827165333910962,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052841,
+      "value": 22.436708411866732,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052846,
+      "value": 23.65179552585782,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052850,
+      "value": 29.990573032802875,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052854,
+      "value": 26.201363047355642,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052855,
+      "value": 23.599378388885743,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052856,
+      "value": 26.766241695522506,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052860,
+      "value": 23.00218926163415,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052861,
+      "value": 28.62701603724135,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052867,
+      "value": 20.022693695590352,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052873,
+      "value": 23.02736186399597,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052877,
+      "value": 24.214669553456137,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052878,
+      "value": 23.110525723673796,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052880,
+      "value": 20.60080467537435,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052882,
+      "value": 26.18899128581838,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052883,
+      "value": 28.9609943813453,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052889,
+      "value": 20.980111437673138,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052892,
+      "value": 20.26426823371513,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052894,
+      "value": 20.112386624383152,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052895,
+      "value": 24.220511545442648,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052896,
+      "value": 27.128432960607174,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052897,
+      "value": 21.794964188666064,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052898,
+      "value": 29.42540414366252,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052899,
+      "value": 20.500251274443723,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052902,
+      "value": 23.822311011152994,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052907,
+      "value": 22.890718617506,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052909,
+      "value": 21.91233167471849,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052911,
+      "value": 22.257660878048135,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052913,
+      "value": 24.563326726777117,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052914,
+      "value": 27.489737521503432,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052918,
+      "value": 28.256640066780676,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052919,
+      "value": 20.01306520203867,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052924,
+      "value": 27.022928778673194,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052925,
+      "value": 20.544107790352292,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052930,
+      "value": 27.270332246848042,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052935,
+      "value": 21.03470316079998,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052942,
+      "value": 20.47851667377468,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052946,
+      "value": 28.523126898226817,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052948,
+      "value": 28.66501811735853,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052949,
+      "value": 22.89311366641894,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052950,
+      "value": 25.279167515653608,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052951,
+      "value": 29.395577322682406,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052952,
+      "value": 20.830719402225082,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052954,
+      "value": 20.58199840946241,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052957,
+      "value": 26.8453726434064,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052960,
+      "value": 22.958025590515067,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052966,
+      "value": 24.882086269837277,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052967,
+      "value": 24.728315415088623,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052969,
+      "value": 25.0617636434086,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052970,
+      "value": 23.154333591703793,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052971,
+      "value": 26.764502767691358,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052976,
+      "value": 25.303503523534083,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052977,
+      "value": 21.973344209389545,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052979,
+      "value": 21.20526620042722,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052982,
+      "value": 23.010646837567762,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052983,
+      "value": 26.843358687599665,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052987,
+      "value": 29.405838437409958,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052989,
+      "value": 28.526976090544572,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052994,
+      "value": 25.08061327939788,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052995,
+      "value": 25.277068810101913,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763052997,
+      "value": 24.868136612556373,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053000,
+      "value": 22.126378815750094,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053001,
+      "value": 22.621127839061323,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053003,
+      "value": 21.84220098114705,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053004,
+      "value": 23.845064102112836,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053006,
+      "value": 27.993537134735245,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053007,
+      "value": 28.807743109752504,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053010,
+      "value": 27.181726962038397,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053016,
+      "value": 20.67860506873784,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053019,
+      "value": 20.190521866834732,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053020,
+      "value": 28.955281300052064,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053025,
+      "value": 24.678469794934564,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053028,
+      "value": 25.692457343757507,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053031,
+      "value": 27.75333219797296,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053032,
+      "value": 28.028910124912496,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053034,
+      "value": 26.30109839802879,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053036,
+      "value": 23.261825197533476,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053039,
+      "value": 29.462959566232463,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053045,
+      "value": 29.976144858837802,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053048,
+      "value": 20.076522796009815,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053051,
+      "value": 23.098825113429005,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053052,
+      "value": 26.280202559138466,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053054,
+      "value": 21.072182455962132,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053055,
+      "value": 24.539596199785226,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053058,
+      "value": 20.477178832529184,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053061,
+      "value": 20.122005018918365,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053067,
+      "value": 29.659637687809496,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053069,
+      "value": 25.239469584321835,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053070,
+      "value": 21.77908267333726,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053071,
+      "value": 28.296608616006978,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053075,
+      "value": 28.46356345600762,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053079,
+      "value": 21.689184834752478,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053084,
+      "value": 20.292735361820377,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053087,
+      "value": 27.13080964893686,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053090,
+      "value": 21.18430232317355,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053095,
+      "value": 29.198315630109594,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053096,
+      "value": 26.026744814016425,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053097,
+      "value": 23.99182072969268,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053100,
+      "value": 20.46301774256701,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053103,
+      "value": 28.826368860689236,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053106,
+      "value": 25.794130446039585,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053109,
+      "value": 23.059899177500675,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053110,
+      "value": 27.897395484497054,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053114,
+      "value": 27.85345835365463,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053116,
+      "value": 27.929566542437314,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053117,
+      "value": 27.89214461078916,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053120,
+      "value": 21.902450357456775,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053123,
+      "value": 24.20413014670897,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053126,
+      "value": 27.18168356265975,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053130,
+      "value": 20.287112948824678,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053131,
+      "value": 27.10081197022307,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053133,
+      "value": 20.923616392534615,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053134,
+      "value": 29.87627595205334,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053141,
+      "value": 28.035132367997235,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053142,
+      "value": 23.44928238406274,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053146,
+      "value": 28.97210281145636,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053151,
+      "value": 27.64523033413542,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053152,
+      "value": 29.570187172030387,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053153,
+      "value": 27.39084071245286,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053157,
+      "value": 26.20880142176554,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053159,
+      "value": 22.93683513824574,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053166,
+      "value": 24.112966396009554,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053169,
+      "value": 21.772865661594533,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053174,
+      "value": 21.307689823987833,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053176,
+      "value": 21.926136959394007,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053179,
+      "value": 29.363680817307245,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053180,
+      "value": 25.95560930253066,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053181,
+      "value": 28.288798018327537,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053185,
+      "value": 23.976412338586144,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053187,
+      "value": 20.099682956680663,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053189,
+      "value": 27.436171720743573,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053192,
+      "value": 28.339137188977833,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053197,
+      "value": 26.188204634326546,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053201,
+      "value": 21.025380415015686,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053213,
+      "value": 29.877633193135114,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053215,
+      "value": 20.617577748531755,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053216,
+      "value": 23.251415522764116,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053219,
+      "value": 29.447609437213924,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053222,
+      "value": 21.629406389542538,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053224,
+      "value": 22.31496334849255,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053227,
+      "value": 29.825229681199403,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053228,
+      "value": 29.464063418482365,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053229,
+      "value": 27.853193265085483,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053230,
+      "value": 26.93614059163167,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053231,
+      "value": 24.831084744364546,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053234,
+      "value": 22.078180857811276,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053236,
+      "value": 29.958707838103678,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053241,
+      "value": 20.52913196032534,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053245,
+      "value": 22.293991210765242,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053247,
+      "value": 23.940959830067484,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053249,
+      "value": 20.585864950040076,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053251,
+      "value": 20.987633338010898,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053252,
+      "value": 25.048908760223295,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053259,
+      "value": 27.4722121786911,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053274,
+      "value": 21.63643262488661,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053278,
+      "value": 28.245517340737,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053279,
+      "value": 26.14333303496553,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053280,
+      "value": 29.746827689338424,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053287,
+      "value": 22.096451230173187,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053288,
+      "value": 22.333733879155936,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053294,
+      "value": 27.792855106267744,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053295,
+      "value": 22.471306858740903,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053298,
+      "value": 23.347265554541963,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053300,
+      "value": 22.289315571549086,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053301,
+      "value": 20.377219993801454,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053303,
+      "value": 27.3941487696047,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053312,
+      "value": 24.655453816600517,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053315,
+      "value": 24.668470266478664,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053317,
+      "value": 26.139284978084333,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053319,
+      "value": 29.5423252435178,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053323,
+      "value": 22.34619186611701,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053325,
+      "value": 23.182703324286166,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053326,
+      "value": 21.458861685167005,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053327,
+      "value": 27.57872123343819,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053333,
+      "value": 26.979473461335726,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053334,
+      "value": 29.359042925311392,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053336,
+      "value": 25.64876158135302,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053345,
+      "value": 23.3818637396827,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053347,
+      "value": 20.538929983542833,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053349,
+      "value": 25.9446799153516,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053350,
+      "value": 24.78288902378395,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053355,
+      "value": 27.323326928706056,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053364,
+      "value": 27.576459809264534,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053366,
+      "value": 26.456510398230474,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053370,
+      "value": 21.041707369639116,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053371,
+      "value": 28.109203764377504,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053382,
+      "value": 26.459400810176017,
+      "role": "primary"
+    },
+    {
+      "timestamp": 1763053383,
+      "value": 27.870754520343777,
+      "role": "primary"
+    }
+  ]
+}

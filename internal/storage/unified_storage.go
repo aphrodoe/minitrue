@@ -23,6 +23,7 @@ type UnifiedStorage struct {
 	file      *os.File
 	engine    *StorageEngine
 	filepath  string
+	dataFile  string // JSON file for full sample data persistence
 	batchSize int
 	batch     []models.Record
 	nodeID    string
@@ -38,23 +39,30 @@ type sample struct {
 func NewUnifiedStorage(filepath string) *UnifiedStorage {
 	nodeID := "unknown"
 	if len(filepath) > 5 {
-		nodeID = filepath[len(filepath)-9 : len(filepath)-5] 
+		nodeID = filepath[len(filepath)-9 : len(filepath)-5]
 	}
-	
+
+	// Create data file path (JSON for full sample persistence)
+	dataFile := filepath[:len(filepath)-5] + "_data.json"
+
 	storage := &UnifiedStorage{
 		data:      make(map[string][]sample),
 		file:      nil,
 		engine:    NewStorageEngine(filepath),
 		filepath:  filepath,
+		dataFile:  dataFile,
 		batchSize: 10, // Reduced from 1000 for faster testing
 		batch:     make([]models.Record, 0, 10),
 		nodeID:    nodeID,
 		lastFlush: time.Now(),
 	}
-	
+
+	// Load existing data from disk on startup
+	storage.loadFromDisk()
+
 	// Start periodic flush goroutine
 	go storage.periodicFlush()
-	
+
 	return storage
 }
 
@@ -62,13 +70,15 @@ func NewUnifiedStorage(filepath string) *UnifiedStorage {
 func (m *UnifiedStorage) periodicFlush() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
-	
+
 	for range ticker.C {
 		m.mu.Lock()
 		if len(m.batch) > 0 {
 			log.Printf("[Storage-%s] Periodic flush: %d records", m.nodeID, len(m.batch))
 			m.flushBatchUnlocked()
 		}
+		// Also persist all sample data (both primary and replica) to JSON
+		m.persistToJSONUnlocked()
 		m.mu.Unlock()
 	}
 }
@@ -93,7 +103,7 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 	}
 	device, _ := mp["device_id"].(string)
 	metric, _ := mp["metric_name"].(string)
-	
+
 	ts := int64(0)
 	if v, ok := mp["timestamp"].(float64); ok {
 		ts = int64(v)
@@ -102,7 +112,7 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 	} else {
 		ts = time.Now().Unix()
 	}
-	
+
 	val := 0.0
 	if v, ok := mp["value"].(float64); ok {
 		val = v
@@ -113,24 +123,24 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 	m.mu.Lock()
 	newSample := sample{Timestamp: ts, Value: val, Role: role}
 	arr := m.data[key]
-	
+
 	// Insert in sorted order using binary search for optimal performance
 	insertPos := sort.Search(len(arr), func(i int) bool {
 		return arr[i].Timestamp >= ts
 	})
-	
+
 	// Insert at the correct position to maintain sorted order
 	if insertPos == len(arr) {
 		// Append at the end
 		m.data[key] = append(arr, newSample)
 	} else {
 		// Insert at position
-		arr = append(arr, sample{}) // Extend slice
+		arr = append(arr, sample{})              // Extend slice
 		copy(arr[insertPos+1:], arr[insertPos:]) // Shift elements
 		arr[insertPos] = newSample
 		m.data[key] = arr
 	}
-	
+
 	if role == "primary" {
 		m.batch = append(m.batch, models.Record{
 			Timestamp: ts,
@@ -149,38 +159,38 @@ func (m *UnifiedStorage) flushBatchUnlocked() {
 	if len(m.batch) == 0 {
 		return
 	}
-	
+
 	batch := make([]models.Record, len(m.batch))
 	copy(batch, m.batch)
 	m.batch = m.batch[:0]
 	m.lastFlush = time.Now()
-	
+
 	// Release lock before doing I/O
 	m.mu.Unlock()
-	
+
 	// Sort batch by timestamp to ensure optimal Gorilla compression
 	sort.Slice(batch, func(i, j int) bool {
 		return batch[i].Timestamp < batch[j].Timestamp
 	})
-	
+
 	existing, err := m.engine.Read()
 	if err != nil {
 		log.Printf("[Storage-%s] No existing data, starting fresh", m.nodeID)
 		existing = []models.Record{}
 	}
-	
+
 	// Merge existing and batch data, maintaining sorted order for optimal compression
 	allRecords := append(existing, batch...)
 	sort.Slice(allRecords, func(i, j int) bool {
 		return allRecords[i].Timestamp < allRecords[j].Timestamp
 	})
-	
+
 	if err := m.engine.Write(allRecords); err != nil {
 		log.Printf("[Storage-%s] ERROR writing to disk: %v", m.nodeID, err)
 	} else {
 		log.Printf("[Storage-%s] Successfully wrote %d records to %s", m.nodeID, len(allRecords), m.filepath)
 	}
-	
+
 	// Re-acquire lock
 	m.mu.Lock()
 }
@@ -213,15 +223,26 @@ func binarySearchEnd(arr []sample, end int64) int {
 func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]float64, error) {
 	key := deviceID + "|" + metric
 	m.mu.RLock()
-	defer m.mu.RUnlock()
 	arr, ok := m.data[key]
+	m.mu.RUnlock()
+
+	// If not in memory, try loading from disk
 	if !ok || len(arr) == 0 {
-		return nil, nil
+		m.mu.Lock()
+		m.loadFromDisk()
+		arr, ok = m.data[key]
+		m.mu.Unlock()
+		if !ok || len(arr) == 0 {
+			return []float64{}, nil
+		}
 	}
-	
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	// Optimized query using binary search for time range
 	var startIdx, endIdx int
-	
+
 	if start == 0 && end == 0 {
 		// Return all data
 		startIdx = 0
@@ -233,7 +254,7 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 			// No data in range
 			return []float64{}, nil
 		}
-		
+
 		if end == 0 {
 			// No end time specified, return everything from start to end
 			endIdx = len(arr) - 1
@@ -245,29 +266,105 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 			}
 		}
 	}
-	
+
 	// Pre-allocate result slice with exact size for better performance
 	resultCount := endIdx - startIdx + 1
 	res := make([]float64, 0, resultCount)
-	
+
 	// Iterate only through the range found by binary search
 	for i := startIdx; i <= endIdx; i++ {
 		res = append(res, arr[i].Value)
 	}
-	
+
 	return res, nil
+}
+
+// loadFromDisk loads all sample data from the JSON file
+func (m *UnifiedStorage) loadFromDisk() {
+	data, err := os.ReadFile(m.dataFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Printf("[Storage-%s] No existing data file, starting fresh", m.nodeID)
+			return
+		}
+		log.Printf("[Storage-%s] Error reading data file: %v", m.nodeID, err)
+		return
+	}
+
+	var persistedData map[string][]sample
+	if err := json.Unmarshal(data, &persistedData); err != nil {
+		log.Printf("[Storage-%s] Error unmarshaling data file: %v", m.nodeID, err)
+		return
+	}
+
+	// Merge with existing data, maintaining sorted order
+	for key, samples := range persistedData {
+		existing := m.data[key]
+		merged := append(existing, samples...)
+		sort.Slice(merged, func(i, j int) bool {
+			return merged[i].Timestamp < merged[j].Timestamp
+		})
+		m.data[key] = merged
+	}
+
+	log.Printf("[Storage-%s] Loaded %d keys from disk", m.nodeID, len(persistedData))
+}
+
+// persistToJSONUnlocked writes all sample data to JSON file (both primary and replica)
+func (m *UnifiedStorage) persistToJSONUnlocked() {
+	// Create a copy of data to avoid holding lock during I/O
+	dataCopy := make(map[string][]sample)
+	for k, v := range m.data {
+		samplesCopy := make([]sample, len(v))
+		copy(samplesCopy, v)
+		dataCopy[k] = samplesCopy
+	}
+
+	// Release lock before I/O
+	m.mu.Unlock()
+
+	dataJSON, err := json.MarshalIndent(dataCopy, "", "  ")
+	if err != nil {
+		log.Printf("[Storage-%s] Error marshaling data: %v", m.nodeID, err)
+		m.mu.Lock()
+		return
+	}
+
+	// Write atomically using temp file + rename
+	tmpFile := m.dataFile + ".tmp"
+	if err := os.WriteFile(tmpFile, dataJSON, 0644); err != nil {
+		log.Printf("[Storage-%s] Error writing data file: %v", m.nodeID, err)
+		m.mu.Lock()
+		return
+	}
+
+	if err := os.Rename(tmpFile, m.dataFile); err != nil {
+		log.Printf("[Storage-%s] Error renaming data file: %v", m.nodeID, err)
+		os.Remove(tmpFile)
+		m.mu.Lock()
+		return
+	}
+
+	// Re-acquire lock
+	m.mu.Lock()
 }
 
 func (m *UnifiedStorage) Close() error {
 	m.mu.Lock()
-	defer m.mu.Unlock()
-	
+
 	log.Printf("[Storage-%s] Closing storage, flushing remaining %d records", m.nodeID, len(m.batch))
-	
+
 	if len(m.batch) > 0 {
 		m.flushBatchUnlocked()
+		// flushBatchUnlocked unlocks and re-locks, so lock is still held here
 	}
-	
+
+	// Final persistence of all data
+	m.persistToJSONUnlocked()
+	// persistToJSONUnlocked unlocks and re-locks, so lock is still held here
+
+	m.mu.Unlock()
+
 	if m.file != nil {
 		return m.file.Close()
 	}
