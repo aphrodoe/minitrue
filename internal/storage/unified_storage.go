@@ -33,7 +33,6 @@ type UnifiedStorage struct {
 	file      *os.File
 	engine    *StorageEngine
 	filepath  string
-	dataFile  string // JSON file for full sample data persistence
 	batchSize int
 	batch     []models.Record
 	nodeID    string
@@ -52,23 +51,16 @@ func NewUnifiedStorage(filepath string) *UnifiedStorage {
 		nodeID = filepath[len(filepath)-9 : len(filepath)-5]
 	}
 
-	// Create data file path (JSON for full sample persistence)
-	dataFile := filepath[:len(filepath)-5] + "_data.json"
-
 	storage := &UnifiedStorage{
 		data:      make(map[string][]sample),
 		file:      nil,
 		engine:    NewStorageEngine(filepath),
 		filepath:  filepath,
-		dataFile:  dataFile,
 		batchSize: 10, // Reduced from 1000 for faster testing
 		batch:     make([]models.Record, 0, 10),
 		nodeID:    nodeID,
 		lastFlush: time.Now(),
 	}
-
-	// Load existing data from disk on startup
-	storage.loadFromDisk()
 
 	// Start periodic flush goroutine
 	go storage.periodicFlush()
@@ -87,8 +79,6 @@ func (m *UnifiedStorage) periodicFlush() {
 			log.Printf("[Storage-%s] Periodic flush: %d records", m.nodeID, len(m.batch))
 			m.flushBatchUnlocked()
 		}
-		// Also persist all sample data (both primary and replica) to JSON
-		m.persistToJSONUnlocked()
 		m.mu.Unlock()
 	}
 }
@@ -236,17 +226,10 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 	arr, ok := m.data[key]
 	m.mu.RUnlock()
 
-	// If not in memory, try loading from disk
+	// If not in memory, return empty
 	if !ok || len(arr) == 0 {
-		m.mu.Lock()
-		m.loadFromDisk()
-		arr, ok = m.data[key]
-		m.mu.Unlock()
-		if !ok || len(arr) == 0 {
-			log.Printf("[Storage-%s] Query for %s returned 0 points (key not found or empty)", m.nodeID, key)
-			return []float64{}, nil
-		}
-		log.Printf("[Storage-%s] Loaded %d points for %s from disk", m.nodeID, len(arr), key)
+		log.Printf("[Storage-%s] Query for %s returned 0 points (key not found or empty)", m.nodeID, key)
+		return []float64{}, nil
 	}
 
 	m.mu.RLock()
@@ -303,15 +286,9 @@ func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int
 	arr, ok := m.data[key]
 	m.mu.RUnlock()
 
-	// If not in memory, try loading from disk
+	// If not in memory, return empty
 	if !ok || len(arr) == 0 {
-		m.mu.Lock()
-		m.loadFromDisk()
-		arr, ok = m.data[key]
-		m.mu.Unlock()
-		if !ok || len(arr) == 0 {
-			return QueryStats{}, nil
-		}
+		return QueryStats{}, nil
 	}
 
 	m.mu.RLock()
@@ -369,83 +346,6 @@ func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int
 	return QueryStats{Sum: sum, Count: count, Min: min, Max: max}, nil
 }
 
-// loadFromDisk loads all sample data from the JSON file
-// If replace is true, it replaces existing data; otherwise it merges
-func (m *UnifiedStorage) loadFromDisk() {
-	data, err := os.ReadFile(m.dataFile)
-	if err != nil {
-		if os.IsNotExist(err) {
-			log.Printf("[Storage-%s] No existing data file, starting fresh", m.nodeID)
-			return
-		}
-		log.Printf("[Storage-%s] Error reading data file: %v", m.nodeID, err)
-		return
-	}
-
-	var persistedData map[string][]sample
-	if err := json.Unmarshal(data, &persistedData); err != nil {
-		log.Printf("[Storage-%s] Error unmarshaling data file: %v", m.nodeID, err)
-		return
-	}
-
-	// Replace existing data (used when reloading after deletion)
-	if len(m.data) == 0 {
-		// If data map is empty, just assign directly
-		m.data = persistedData
-	} else {
-		// Merge with existing data, maintaining sorted order
-		for key, samples := range persistedData {
-			existing := m.data[key]
-			merged := append(existing, samples...)
-			sort.Slice(merged, func(i, j int) bool {
-				return merged[i].Timestamp < merged[j].Timestamp
-			})
-			m.data[key] = merged
-		}
-	}
-
-	log.Printf("[Storage-%s] Loaded %d keys from disk", m.nodeID, len(persistedData))
-}
-
-// persistToJSONUnlocked writes all sample data to JSON file (both primary and replica)
-func (m *UnifiedStorage) persistToJSONUnlocked() {
-	// Create a copy of data to avoid holding lock during I/O
-	dataCopy := make(map[string][]sample)
-	for k, v := range m.data {
-		samplesCopy := make([]sample, len(v))
-		copy(samplesCopy, v)
-		dataCopy[k] = samplesCopy
-	}
-
-	// Release lock before I/O
-	m.mu.Unlock()
-
-	dataJSON, err := json.MarshalIndent(dataCopy, "", "  ")
-	if err != nil {
-		log.Printf("[Storage-%s] Error marshaling data: %v", m.nodeID, err)
-		m.mu.Lock()
-		return
-	}
-
-	// Write atomically using temp file + rename
-	tmpFile := m.dataFile + ".tmp"
-	if err := os.WriteFile(tmpFile, dataJSON, 0644); err != nil {
-		log.Printf("[Storage-%s] Error writing data file: %v", m.nodeID, err)
-		m.mu.Lock()
-		return
-	}
-
-	if err := os.Rename(tmpFile, m.dataFile); err != nil {
-		log.Printf("[Storage-%s] Error renaming data file: %v", m.nodeID, err)
-		os.Remove(tmpFile)
-		m.mu.Lock()
-		return
-	}
-
-	// Re-acquire lock
-	m.mu.Lock()
-}
-
 // Delete removes all data for a specific device_id and metric_name
 func (m *UnifiedStorage) Delete(deviceID, metric string) error {
 	key := deviceID + "|" + metric
@@ -456,18 +356,7 @@ func (m *UnifiedStorage) Delete(deviceID, metric string) error {
 	// Remove from memory
 	delete(m.data, key)
 
-	// Note: The batch may contain records for this device/metric, but since we don't have
-	// device/metric info in the Record struct, we can't filter it here. The batch will
-	// be flushed normally, but the deleted data won't be in memory anymore, so it won't
-	// be persisted when we save to JSON.
-
-	// Persist the updated data to disk
-	m.persistToJSONUnlocked()
-
 	log.Printf("[Storage-%s] Deleted all data for device=%s metric=%s", m.nodeID, deviceID, metric)
-
-	// Reload from disk to ensure consistency
-	m.Reload()
 
 	return nil
 }
@@ -479,9 +368,6 @@ func (m *UnifiedStorage) Reload() error {
 
 	// Clear existing data
 	m.data = make(map[string][]sample)
-
-	// Reload from disk
-	m.loadFromDisk()
 
 	log.Printf("[Storage-%s] Reloaded data from disk", m.nodeID)
 	return nil
@@ -496,10 +382,6 @@ func (m *UnifiedStorage) Close() error {
 		m.flushBatchUnlocked()
 		// flushBatchUnlocked unlocks and re-locks, so lock is still held here
 	}
-
-	// Final persistence of all data
-	m.persistToJSONUnlocked()
-	// persistToJSONUnlocked unlocks and re-locks, so lock is still held here
 
 	m.mu.Unlock()
 
