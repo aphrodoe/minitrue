@@ -81,7 +81,14 @@ function App() {
 
       <div className="tab-content">
         <div style={{ display: activeTab === 'query' ? 'block' : 'none' }}>
-          <QueryForm onSubmit={handleQuery} loading={loading} />
+          <QueryForm 
+            onSubmit={handleQuery} 
+            loading={loading}
+            onClearResults={() => {
+              setQueryResult(null);
+              setError(null);
+            }}
+          />
           
           {error && (
             <div className="error-message">

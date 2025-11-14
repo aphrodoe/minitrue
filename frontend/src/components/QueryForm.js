@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './QueryForm.css';
 
-const QueryForm = ({ onSubmit, loading }) => {
+const QueryForm = ({ onSubmit, loading, onClearResults }) => {
   const [formData, setFormData] = useState({
     device_id: '',
     metric_name: '',
@@ -186,14 +186,13 @@ const QueryForm = ({ onSubmit, loading }) => {
       return true;
     }
     
-    // If one is set but not the other, check if it's valid
-    if (startTime === 0 && endTime !== 0) {
-      if (endDisplay && endDisplay.trim() !== '') {
-        setTimeError('Please enter a start time or use "All Data" button.');
-        return false;
-      }
+    // If start_time is 0 (epoch) and end_time is set, this is valid for "All Data" button
+    if (startTime === 0 && endTime !== 0 && endTime > 0) {
+      // This is valid - "All Data" sets start to epoch (0) and end to now
+      return true;
     }
     
+    // If end is 0 but start is set, that's invalid
     if (endTime === 0 && startTime !== 0) {
       if (startDisplay && startDisplay.trim() !== '') {
         setTimeError('Please enter an end time or use "All Data" button.');
@@ -708,6 +707,11 @@ const QueryForm = ({ onSubmit, loading }) => {
       const data = await response.json();
       alert(`Success! ${data.message || 'Data deleted successfully.'}`);
       
+      // Clear query results
+      if (onClearResults) {
+        onClearResults();
+      }
+      
       // Clear the form
       setFormData({
         device_id: '',
@@ -818,32 +822,23 @@ const QueryForm = ({ onSubmit, loading }) => {
           <button
             type="button"
             onClick={() => {
-              // Set timestamps to 0 to query all data from disk
+              const now = getCurrentUnixTime();
+              // Set timestamps from epoch (Jan 1, 1970) to now to query all data
               const allDataQuery = {
                 ...formData,
-                start_time: 0,
-                end_time: 0,
+                start_time: 0, // Epoch start
+                end_time: now, // Current time
               };
               setFormData(allDataQuery);
-              setStartTimeDisplay('MM/DD/YYYY HH:MM AM');
-              setEndTimeDisplay('MM/DD/YYYY HH:MM AM');
+              
+              // Format the times for display
+              const startFormatted = unixTo12Hour(0);
+              const endFormatted = unixTo12Hour(now);
+              setStartTimeDisplay(startFormatted || '01/01/1970 12:00 AM');
+              setEndTimeDisplay(endFormatted || 'MM/DD/YYYY HH:MM AM');
               setTimeError(''); // Clear any time errors
               setStartTimeError(null);
               setEndTimeError(null);
-              
-              // Automatically submit the query if device and metric are selected
-              // Operation defaults to 'avg' if not set
-              const queryToSubmit = {
-                ...allDataQuery,
-                operation: allDataQuery.operation || 'avg',
-              };
-              
-              if (queryToSubmit.device_id && queryToSubmit.metric_name) {
-                onSubmit(queryToSubmit);
-              } else {
-                // Show alert if required fields are missing
-                alert('Please select Device ID and Metric Name before querying all data.');
-              }
             }}
             className="time-btn"
           >

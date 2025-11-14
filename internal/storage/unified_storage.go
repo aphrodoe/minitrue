@@ -143,8 +143,10 @@ func (m *UnifiedStorage) persist(p interface{}, role string) error {
 
 	if role == "primary" {
 		m.batch = append(m.batch, models.Record{
-			Timestamp: ts,
-			Value:     val,
+			Timestamp:  ts,
+			Value:      val,
+			DeviceID:   device,
+			MetricName: metric,
 		})
 		if len(m.batch) >= m.batchSize {
 			log.Printf("[Storage-%s] Batch full: flushing %d records", m.nodeID, len(m.batch))
@@ -351,12 +353,71 @@ func (m *UnifiedStorage) Delete(deviceID, metric string) error {
 	key := deviceID + "|" + metric
 
 	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	// Remove from memory
 	delete(m.data, key)
 
-	log.Printf("[Storage-%s] Deleted all data for device=%s metric=%s", m.nodeID, deviceID, metric)
+	// Filter batch to remove records with matching device_id and metric_name
+	if len(m.batch) > 0 {
+		originalBatchSize := len(m.batch)
+		filteredBatch := make([]models.Record, 0, len(m.batch))
+		for _, record := range m.batch {
+			if record.DeviceID != deviceID || record.MetricName != metric {
+				filteredBatch = append(filteredBatch, record)
+			}
+		}
+		m.batch = filteredBatch
+		removedCount := originalBatchSize - len(filteredBatch)
+		if removedCount > 0 {
+			log.Printf("[Storage-%s] Filtered batch: removed %d records for deleted device/metric", m.nodeID, removedCount)
+		}
+	}
+
+	// Release lock before I/O operations
+	m.mu.Unlock()
+
+	// Delete from disk by reading, filtering, and rewriting
+	existing, err := m.engine.Read()
+	if err != nil {
+		// If file doesn't exist or can't be read, that's okay - deletion from memory is done
+		log.Printf("[Storage-%s] Could not read disk file for deletion: %v", m.nodeID, err)
+	} else {
+		// Filter out records with matching device_id and metric_name
+		filteredRecords := make([]models.Record, 0, len(existing))
+		for _, record := range existing {
+			// For version 1 files (empty DeviceID/MetricName), skip filtering
+			// Only filter if we have device/metric info
+			if record.DeviceID == "" && record.MetricName == "" {
+				// Version 1 file - keep all records (can't filter without device/metric info)
+				filteredRecords = append(filteredRecords, record)
+			} else if record.DeviceID != deviceID || record.MetricName != metric {
+				// Version 2 file - filter by device/metric
+				filteredRecords = append(filteredRecords, record)
+			}
+		}
+
+		// Write filtered records back to disk
+		if len(filteredRecords) == 0 {
+			// If no records left, delete the file
+			if err := os.Remove(m.filepath); err != nil && !os.IsNotExist(err) {
+				log.Printf("[Storage-%s] Error removing empty file: %v", m.nodeID, err)
+			} else {
+				log.Printf("[Storage-%s] Removed empty disk file after deletion", m.nodeID)
+			}
+		} else {
+			// Write filtered records back
+			if err := m.engine.Write(filteredRecords); err != nil {
+				log.Printf("[Storage-%s] Error writing filtered records to disk: %v", m.nodeID, err)
+			} else {
+				log.Printf("[Storage-%s] Wrote %d filtered records to disk (removed %d)", m.nodeID, len(filteredRecords), len(existing)-len(filteredRecords))
+			}
+		}
+	}
+
+	// Re-acquire lock
+	m.mu.Lock()
+
+	log.Printf("[Storage-%s] Deleted all data for device=%s metric=%s (memory and disk)", m.nodeID, deviceID, metric)
 
 	return nil
 }

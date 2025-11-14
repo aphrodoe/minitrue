@@ -11,7 +11,7 @@ import (
 
 const (
 	MagicNumber     = 0x50415251
-	FormatVersion   = 1
+	FormatVersion   = 2 // Version 2 includes device_id and metric_name
 	HeaderSize      = 32
 	MetadataVersion = 1
 )
@@ -39,9 +39,13 @@ func (se *StorageEngine) Write(records []models.Record) error {
 
 	timestamps := make([]int64, len(records))
 	values := make([]float64, len(records))
+	deviceIDs := make([]string, len(records))
+	metricNames := make([]string, len(records))
 	for i, record := range records {
 		timestamps[i] = record.Timestamp
 		values[i] = record.Value
+		deviceIDs[i] = record.DeviceID
+		metricNames[i] = record.MetricName
 	}
 
 	header := se.buildHeader(len(records))
@@ -63,8 +67,23 @@ func (se *StorageEngine) Write(records []models.Record) error {
 		return fmt.Errorf("failed to write value column: %w", err)
 	}
 
+	deviceIDOffset := valueOffset + int64(len(valueData))
+	deviceIDData := se.encodeStringColumn(deviceIDs)
+	if _, err := file.Write(deviceIDData); err != nil {
+		return fmt.Errorf("failed to write device_id column: %w", err)
+	}
+
+	metricNameOffset := deviceIDOffset + int64(len(deviceIDData))
+	metricNameData := se.encodeStringColumn(metricNames)
+	if _, err := file.Write(metricNameData); err != nil {
+		return fmt.Errorf("failed to write metric_name column: %w", err)
+	}
+
 	footer := se.buildFooter(timestampOffset, int64(len(timestampData)),
-		valueOffset, int64(len(valueData)), len(records))
+		valueOffset, int64(len(valueData)),
+		deviceIDOffset, int64(len(deviceIDData)),
+		metricNameOffset, int64(len(metricNameData)),
+		len(records))
 	if _, err := file.Write(footer); err != nil {
 		return fmt.Errorf("failed to write footer: %w", err)
 	}
@@ -83,7 +102,7 @@ func (se *StorageEngine) buildHeader(recordCount int) []byte {
 	binary.LittleEndian.PutUint32(header[0:4], MagicNumber)
 	binary.LittleEndian.PutUint32(header[4:8], FormatVersion)
 	binary.LittleEndian.PutUint64(header[8:16], uint64(recordCount))
-	binary.LittleEndian.PutUint32(header[16:20], 2)
+	binary.LittleEndian.PutUint32(header[16:20], 4) // 4 columns: timestamp, value, device_id, metric_name
 	copy(header[20:], []byte("TSDB"))
 	return header
 }
@@ -99,16 +118,73 @@ func (se *StorageEngine) encodeCompressedColumn(compressedData []byte) []byte {
 	return result
 }
 
+// encodeStringColumn encodes a slice of strings as length-prefixed strings
+func (se *StorageEngine) encodeStringColumn(strings []string) []byte {
+	result := make([]byte, 0, 1024)
+	
+	// Write number of strings
+	countBuf := make([]byte, 4)
+	binary.LittleEndian.PutUint32(countBuf, uint32(len(strings)))
+	result = append(result, countBuf...)
+	
+	// Write each string as length-prefixed
+	for _, s := range strings {
+		lenBuf := make([]byte, 4)
+		binary.LittleEndian.PutUint32(lenBuf, uint32(len(s)))
+		result = append(result, lenBuf...)
+		result = append(result, []byte(s)...)
+	}
+	
+	return result
+}
+
+// decodeStringColumn decodes a slice of strings from length-prefixed format
+func (se *StorageEngine) decodeStringColumn(data []byte, count int) ([]string, error) {
+	if len(data) < 4 {
+		return nil, fmt.Errorf("insufficient data for string column")
+	}
+	
+	pos := 0
+	stringCount := int(binary.LittleEndian.Uint32(data[pos:pos+4]))
+	pos += 4
+	
+	if stringCount != count {
+		return nil, fmt.Errorf("string count mismatch: expected %d, got %d", count, stringCount)
+	}
+	
+	strings := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		if pos+4 > len(data) {
+			return nil, fmt.Errorf("insufficient data for string length at index %d", i)
+		}
+		
+		strLen := int(binary.LittleEndian.Uint32(data[pos:pos+4]))
+		pos += 4
+		
+		if pos+strLen > len(data) {
+			return nil, fmt.Errorf("insufficient data for string at index %d", i)
+		}
+		
+		strings = append(strings, string(data[pos:pos+strLen]))
+		pos += strLen
+	}
+	
+	return strings, nil
+}
+
 func (se *StorageEngine) buildFooter(timestampOffset, timestampSize,
-	valueOffset, valueSize int64, recordCount int) []byte {
-	footer := make([]byte, 0, 256)
+	valueOffset, valueSize int64,
+	deviceIDOffset, deviceIDSize int64,
+	metricNameOffset, metricNameSize int64,
+	recordCount int) []byte {
+	footer := make([]byte, 0, 512)
 	
 	versionBuf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(versionBuf, MetadataVersion)
 	footer = append(footer, versionBuf...)
 	
 	numColumnsBuf := make([]byte, 4)
-	binary.LittleEndian.PutUint32(numColumnsBuf, 2)
+	binary.LittleEndian.PutUint32(numColumnsBuf, 4) // 4 columns
 	footer = append(footer, numColumnsBuf...)
 	
 	timestampMeta := se.buildColumnMetadata("timestamp", 1, timestampOffset, timestampSize, recordCount)
@@ -116,6 +192,12 @@ func (se *StorageEngine) buildFooter(timestampOffset, timestampSize,
 	
 	valueMeta := se.buildColumnMetadata("value", 1, valueOffset, valueSize, recordCount)
 	footer = append(footer, valueMeta...)
+	
+	deviceIDMeta := se.buildColumnMetadata("device_id", 2, deviceIDOffset, deviceIDSize, recordCount)
+	footer = append(footer, deviceIDMeta...)
+	
+	metricNameMeta := se.buildColumnMetadata("metric_name", 2, metricNameOffset, metricNameSize, recordCount)
+	footer = append(footer, metricNameMeta...)
 	
 	return footer
 }
@@ -163,6 +245,7 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 		return nil, fmt.Errorf("invalid magic number")
 	}
 
+	formatVersion := binary.LittleEndian.Uint32(data[4:8])
 	recordCount := int(binary.LittleEndian.Uint64(data[8:16]))
 
 	footerSizeOffset := len(data) - 4
@@ -172,11 +255,14 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	footer := data[footerStart:footerSizeOffset]
 	numColumns := binary.LittleEndian.Uint32(footer[4:8])
 	
-	if numColumns != 2 {
-		return nil, fmt.Errorf("unexpected number of columns")
+	// Support both version 1 (2 columns) and version 2 (4 columns)
+	if numColumns != 2 && numColumns != 4 {
+		return nil, fmt.Errorf("unexpected number of columns: %d", numColumns)
 	}
 
 	pos := 8
+	
+	// Read timestamp column
 	timestampNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(timestampNameLen)
 	pos += 4
@@ -185,12 +271,14 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	timestampSize := binary.LittleEndian.Uint64(footer[pos : pos+8])
 	pos += 8 + 8
 
+	// Read value column
 	valueNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(valueNameLen)
 	pos += 4
 	valueOffset := binary.LittleEndian.Uint64(footer[pos : pos+8])
 	pos += 8
 	valueSize := binary.LittleEndian.Uint64(footer[pos : pos+8])
+	pos += 8 + 8
 
 	timestampData := data[timestampOffset : timestampOffset+timestampSize]
 	timestamps := se.decodeCompressedInt64Column(timestampData, recordCount)
@@ -199,10 +287,54 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	values := se.decodeCompressedFloat64Column(valueData, recordCount)
 
 	records := make([]models.Record, recordCount)
+	
+	// Handle version 1 files (no device_id/metric_name)
+	if formatVersion == 1 || numColumns == 2 {
+		for i := 0; i < recordCount; i++ {
+			records[i] = models.Record{
+				Timestamp:  timestamps[i],
+				Value:      values[i],
+				DeviceID:   "", // Empty for version 1 files
+				MetricName: "", // Empty for version 1 files
+			}
+		}
+		return records, nil
+	}
+	
+	// Handle version 2 files (with device_id/metric_name)
+	deviceIDNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
+	pos += 4 + int(deviceIDNameLen)
+	pos += 4
+	deviceIDOffset := binary.LittleEndian.Uint64(footer[pos : pos+8])
+	pos += 8
+	deviceIDSize := binary.LittleEndian.Uint64(footer[pos : pos+8])
+	pos += 8 + 8
+
+	metricNameNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
+	pos += 4 + int(metricNameNameLen)
+	pos += 4
+	metricNameOffset := binary.LittleEndian.Uint64(footer[pos : pos+8])
+	pos += 8
+	metricNameSize := binary.LittleEndian.Uint64(footer[pos : pos+8])
+
+	deviceIDData := data[deviceIDOffset : deviceIDOffset+deviceIDSize]
+	deviceIDs, err := se.decodeStringColumn(deviceIDData, recordCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode device_id column: %w", err)
+	}
+
+	metricNameData := data[metricNameOffset : metricNameOffset+metricNameSize]
+	metricNames, err := se.decodeStringColumn(metricNameData, recordCount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode metric_name column: %w", err)
+	}
+
 	for i := 0; i < recordCount; i++ {
 		records[i] = models.Record{
-			Timestamp: timestamps[i],
-			Value:     values[i],
+			Timestamp:  timestamps[i],
+			Value:      values[i],
+			DeviceID:   deviceIDs[i],
+			MetricName: metricNames[i],
 		}
 	}
 

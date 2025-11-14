@@ -57,6 +57,7 @@ type Service struct {
 	nodeID     string
 	httpClient *http.Client
 	wsHub      *websocket.Hub
+	restartFn  func() // Function to trigger server restart
 }
 
 func New(m *mqttclient.Client, s storage.Storage) *Service {
@@ -64,6 +65,10 @@ func New(m *mqttclient.Client, s storage.Storage) *Service {
 }
 
 func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Service {
+	return NewWithRestart(m, s, nodeID, nil)
+}
+
+func NewWithRestart(m *mqttclient.Client, s storage.Storage, nodeID string, restartFn func()) *Service {
 	wsOpts := mqttclient.Options{
 		BrokerURL: "tcp://localhost:1883",
 		ClientID:  fmt.Sprintf("minitrue-ws-%s-%d", nodeID, time.Now().UnixNano()),
@@ -78,7 +83,8 @@ func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Serv
 			httpClient: &http.Client{
 				Timeout: 5 * time.Second,
 			},
-			wsHub: nil,
+			wsHub:     nil,
+			restartFn: restartFn,
 		}
 	}
 
@@ -92,7 +98,8 @@ func NewWithNodeID(m *mqttclient.Client, s storage.Storage, nodeID string) *Serv
 		httpClient: &http.Client{
 			Timeout: 5 * time.Second,
 		},
-		wsHub: hub,
+		wsHub:     hub,
+		restartFn: restartFn,
 	}
 }
 
@@ -100,6 +107,7 @@ func (s *Service) StartHTTP(port int) {
 	http.HandleFunc("/query", s.handleQuery)
 	http.HandleFunc("/query-samples", s.handleQuerySamples)
 	http.HandleFunc("/query-aggregated", s.handleQueryAggregated)
+	http.HandleFunc("/delete", s.handleDelete)
 
 	if s.wsHub != nil {
 		http.HandleFunc("/ws", s.handleWebSocket)
@@ -559,4 +567,67 @@ func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(stats)
+}
+
+// handleDelete handles DELETE requests to remove all data for a device/metric
+func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != "POST" {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	var deleteReq struct {
+		DeviceID   string `json:"device_id"`
+		MetricName string `json:"metric_name"`
+	}
+	if err := json.Unmarshal(body, &deleteReq); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	if deleteReq.DeviceID == "" || deleteReq.MetricName == "" {
+		http.Error(w, "missing device_id or metric_name", http.StatusBadRequest)
+		return
+	}
+
+	// Delete from local storage
+	if err := s.store.Delete(deleteReq.DeviceID, deleteReq.MetricName); err != nil {
+		log.Printf("[Delete] Error deleting data: %v", err)
+		http.Error(w, "storage error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("[Delete] Deleted all data for device=%s metric=%s", deleteReq.DeviceID, deleteReq.MetricName)
+
+	response := map[string]interface{}{
+		"message": fmt.Sprintf("Successfully deleted all data for device=%s metric=%s", deleteReq.DeviceID, deleteReq.MetricName),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
+
+	// Trigger server restart after successful delete
+	if s.restartFn != nil {
+		log.Printf("[Delete] Triggering server restart...")
+		// Use a goroutine to restart after response is sent
+		go func() {
+			time.Sleep(100 * time.Millisecond) // Small delay to ensure response is sent
+			s.restartFn()
+		}()
+	}
 }
