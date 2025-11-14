@@ -2,6 +2,8 @@ package storage
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"sort"
@@ -60,6 +62,11 @@ func NewUnifiedStorage(filepath string) *UnifiedStorage {
 		batch:     make([]models.Record, 0, 10),
 		nodeID:    nodeID,
 		lastFlush: time.Now(),
+	}
+
+	// Load existing data from disk on startup
+	if err := storage.Reload(); err != nil {
+		log.Printf("[Storage-%s] Warning: Failed to reload data from disk: %v", nodeID, err)
 	}
 
 	// Start periodic flush goroutine
@@ -430,7 +437,54 @@ func (m *UnifiedStorage) Reload() error {
 	// Clear existing data
 	m.data = make(map[string][]sample)
 
-	log.Printf("[Storage-%s] Reloaded data from disk", m.nodeID)
+	// Read all records from disk
+	records, err := m.engine.Read()
+	if err != nil {
+		// File might not exist yet, which is okay
+		if errors.Is(err, os.ErrNotExist) {
+			log.Printf("[Storage-%s] No existing data file, starting fresh", m.nodeID)
+			return nil
+		}
+		// Check if the underlying error is file not found (wrapped error)
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) && errors.Is(pathErr.Err, os.ErrNotExist) {
+			log.Printf("[Storage-%s] No existing data file, starting fresh", m.nodeID)
+			return nil
+		}
+		return fmt.Errorf("failed to read from disk: %w", err)
+	}
+
+	if len(records) == 0 {
+		log.Printf("[Storage-%s] No records found in file", m.nodeID)
+		return nil
+	}
+
+	// Group records by device_id|metric_name and convert to samples
+	for _, record := range records {
+		key := record.DeviceID + "|" + record.MetricName
+		newSample := sample{
+			Timestamp: record.Timestamp,
+			Value:     record.Value,
+			Role:      "primary", // All data from disk is treated as primary
+		}
+
+		// Insert in sorted order
+		arr := m.data[key]
+		insertPos := sort.Search(len(arr), func(i int) bool {
+			return arr[i].Timestamp >= record.Timestamp
+		})
+
+		if insertPos == len(arr) {
+			m.data[key] = append(arr, newSample)
+		} else {
+			arr = append(arr, sample{})
+			copy(arr[insertPos+1:], arr[insertPos:])
+			arr[insertPos] = newSample
+			m.data[key] = arr
+		}
+	}
+
+	log.Printf("[Storage-%s] Reloaded %d records from disk into %d keys", m.nodeID, len(records), len(m.data))
 	return nil
 }
 
