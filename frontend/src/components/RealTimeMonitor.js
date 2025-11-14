@@ -33,6 +33,8 @@ const RealTimeMonitor = () => {
   const [showGraph, setShowGraph] = useState(false);
   const [selectedSensor, setSelectedSensor] = useState('all'); 
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
+  
+  const [graphAverage, setGraphAverage] = useState(0);
 
   const wsRef = useRef(null);
   const messageCountRef = useRef(0);
@@ -172,10 +174,18 @@ const RealTimeMonitor = () => {
 
     const sortedData = [...graphDataPoints].sort((a, b) => a.timestamp - b.timestamp);
 
-    if (sortedData.length === 0) return;
+    if (sortedData.length === 0) {
+      setGraphAverage(0);
+      return;
+    }
 
     const timestamps = sortedData.map(dp => dp.timestamp);
     const temperatures = sortedData.map(dp => dp.value);
+
+    const sum = temperatures.reduce((acc, val) => acc + val, 0);
+    const avg = temperatures.length > 0 ? sum / temperatures.length : 0;
+    setGraphAverage(avg);
+
     const minTime = Math.min(...timestamps);
     const maxTime = Math.max(...timestamps);
     const minTemp = Math.min(...temperatures);
@@ -309,20 +319,17 @@ const RealTimeMonitor = () => {
 
   }, [showGraph, graphDataPoints, canvasSize, selectedSensor]);
 
-  // Initialize and update canvas size
   useEffect(() => {
     if (canvasRef.current && showGraph) {
       const canvas = canvasRef.current;
       const container = canvas.parentElement;
       if (container) {
-        // Set canvas size (accounting for padding)
-        const containerWidth = container.clientWidth - 40; // padding
+        const containerWidth = container.clientWidth - 40;
         const width = containerWidth > 0 ? containerWidth : 800;
         canvas.width = width;
         canvas.height = 400;
         setCanvasSize({ width, height: 400 });
       } else {
-        // Fallback size
         canvas.width = 800;
         canvas.height = 400;
         setCanvasSize({ width: 800, height: 400 });
@@ -330,7 +337,6 @@ const RealTimeMonitor = () => {
     }
   }, [showGraph]);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current && showGraph) {
@@ -417,7 +423,21 @@ const RealTimeMonitor = () => {
               No temperature data available for selected sensor. Please ensure temperature metrics are being received.
             </div>
           ) : (
-            <canvas ref={canvasRef} className="temperature-graph" />
+            <>
+              <canvas ref={canvasRef} className="temperature-graph" />
+              <div 
+                className="graph-average"
+                style={{
+                  textAlign: 'center',
+                  marginTop: '10px',
+                  fontSize: '1.1em',
+                  fontWeight: 'bold',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}
+              >
+                Window Average: {graphAverage.toFixed(2)}°C
+              </div>
+            </>
           )}
         </div>
       )}
