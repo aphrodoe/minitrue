@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './RealTimeMonitor.css';
 
 const RealTimeMonitor = () => {
@@ -13,7 +14,7 @@ const RealTimeMonitor = () => {
     metricName: '',
   });
   const [showGraph, setShowGraph] = useState(false);
-  const [selectedSensor, setSelectedSensor] = useState('all'); // 'all', 'sensor_1', 'sensor_2', 'sensor_3'
+  const [selectedSensor, setSelectedSensor] = useState('all'); 
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 400 });
 
   const wsRef = useRef(null);
@@ -49,20 +50,17 @@ const RealTimeMonitor = () => {
         const newDataPoints = lines.map(line => JSON.parse(line));
         
         setDataPoints(prev => {
-          const updated = [...newDataPoints, ...prev].slice(0, 100); // Keep last 100 points
+          const updated = [...newDataPoints, ...prev].slice(0, 100); 
           return updated;
         });
 
-        // Update stats
         messageCountRef.current += newDataPoints.length;
         
-        // Update totalMessages immediately
         setStats(prev => ({
           ...prev,
           totalMessages: prev.totalMessages + newDataPoints.length,
         }));
         
-        // Update messagesPerSecond every second
         const now = Date.now();
         if (now - lastSecondRef.current >= 1000) {
           setStats(prev => ({
@@ -85,7 +83,6 @@ const RealTimeMonitor = () => {
       console.log('WebSocket disconnected');
       setIsConnected(false);
       
-      // Attempt to reconnect after 3 seconds
       reconnectTimeoutRef.current = setTimeout(() => {
         console.log('Attempting to reconnect...');
         connectWebSocket();
@@ -124,21 +121,27 @@ const RealTimeMonitor = () => {
     return colors[deviceId] || '#9E9E9E';
   };
 
-  // Filter data points for temperature metrics only
   const temperatureDataPoints = filteredDataPoints.filter(dp => 
     dp.metric_name.toLowerCase() === 'temperature'
   );
 
-  // Filter by selected sensor for graph display
   const graphDataPoints = selectedSensor === 'all' 
     ? temperatureDataPoints 
     : temperatureDataPoints.filter(dp => dp.device_id === selectedSensor);
 
-  // Draw graph on canvas
   useEffect(() => {
-    if (!showGraph || !canvasRef.current || graphDataPoints.length === 0) {
-      return;
+    if (!showGraph || !canvasRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      if (graphDataPoints.length === 0) return;
     }
+    
+    if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -146,17 +149,14 @@ const RealTimeMonitor = () => {
     const height = canvas.height;
     const padding = { top: 40, right: 40, bottom: 60, left: 80 };
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(0, 0, width, height);
 
-    // Sort data points by timestamp
     const sortedData = [...graphDataPoints].sort((a, b) => a.timestamp - b.timestamp);
 
     if (sortedData.length === 0) return;
 
-    // Calculate min/max values for scaling
     const timestamps = sortedData.map(dp => dp.timestamp);
     const temperatures = sortedData.map(dp => dp.value);
     const minTime = Math.min(...timestamps);
@@ -166,27 +166,22 @@ const RealTimeMonitor = () => {
     const tempRange = maxTemp - minTemp || 1;
     const timeRange = maxTime - minTime || 1;
 
-    // Draw axes
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
     ctx.lineWidth = 1;
-    
-    // X-axis (time)
+
     ctx.beginPath();
     ctx.moveTo(padding.left, height - padding.bottom);
     ctx.lineTo(width - padding.right, height - padding.bottom);
     ctx.stroke();
 
-    // Y-axis (temperature)
     ctx.beginPath();
     ctx.moveTo(padding.left, padding.top);
     ctx.lineTo(padding.left, height - padding.bottom);
     ctx.stroke();
 
-    // Draw grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
 
-    // Horizontal grid lines (temperature)
     for (let i = 0; i <= 5; i++) {
       const y = padding.top + (height - padding.top - padding.bottom) * (i / 5);
       ctx.beginPath();
@@ -195,7 +190,6 @@ const RealTimeMonitor = () => {
       ctx.stroke();
     }
 
-    // Vertical grid lines (time)
     for (let i = 0; i <= 5; i++) {
       const x = padding.left + (width - padding.left - padding.right) * (i / 5);
       ctx.beginPath();
@@ -204,13 +198,11 @@ const RealTimeMonitor = () => {
       ctx.stroke();
     }
 
-    // Draw axis labels
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
 
-    // X-axis labels (time)
     for (let i = 0; i <= 5; i++) {
       const timeValue = minTime + (timeRange * i / 5);
       const x = padding.left + (width - padding.left - padding.right) * (i / 5);
@@ -219,7 +211,6 @@ const RealTimeMonitor = () => {
       ctx.fillText(timeStr, x, height - padding.bottom + 10);
     }
 
-    // Y-axis labels (temperature)
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     for (let i = 0; i <= 5; i++) {
@@ -228,24 +219,20 @@ const RealTimeMonitor = () => {
       ctx.fillText(tempValue.toFixed(1) + '°', padding.left - 15, y);
     }
 
-    // Draw axis titles
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('Time', width / 2, height - padding.bottom + 35);
     
-    // Draw Y-axis title (Temperature) - positioned further left to avoid overlap
     ctx.save();
     ctx.translate(15, height / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Temperature (°C)', 0, 0);
     ctx.restore();
 
-    // Draw data points and lines
     const plotWidth = width - padding.left - padding.right;
     const plotHeight = height - padding.top - padding.bottom;
 
-    // Group by device for different colors
     const deviceGroups = {};
     sortedData.forEach(dp => {
       if (!deviceGroups[dp.device_id]) {
@@ -258,7 +245,6 @@ const RealTimeMonitor = () => {
       const deviceData = deviceGroups[deviceId];
       const color = getDeviceColor(deviceId);
 
-      // Draw line
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -275,7 +261,6 @@ const RealTimeMonitor = () => {
       });
       ctx.stroke();
 
-      // Draw points
       ctx.fillStyle = color;
       deviceData.forEach(dp => {
         const x = padding.left + ((dp.timestamp - minTime) / timeRange) * plotWidth;
@@ -287,7 +272,6 @@ const RealTimeMonitor = () => {
       });
     });
 
-    // Draw legend
     const legendY = padding.top - 25;
     let legendX = padding.left;
     ctx.font = '12px Arial';
@@ -353,10 +337,18 @@ const RealTimeMonitor = () => {
     <div className="realtime-monitor">
       <div className="monitor-header">
         <h2>Real-Time Data Monitor</h2>
-        <div className="connection-status">
-          <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
-            {isConnected ? '● Connected' : '○ Disconnected'}
-          </span>
+        <div className="header-controls">
+          <button
+            onClick={() => setShowGraph(!showGraph)}
+            className="visualize-btn"
+          >
+            {showGraph ? 'Hide Graph' : 'Show Graph'}
+          </button>
+          <div className="connection-status">
+            <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
+              {isConnected ? '● Connected' : '○ Disconnected'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -373,35 +365,6 @@ const RealTimeMonitor = () => {
           <div className="stat-label">Displaying</div>
           <div className="stat-value">{filteredDataPoints.length}</div>
         </div>
-      </div>
-
-      <div className="filters">
-        <input
-          type="text"
-          placeholder="Filter by Device ID..."
-          value={filter.deviceId}
-          onChange={(e) => setFilter(prev => ({ ...prev, deviceId: e.target.value }))}
-          className="filter-input"
-        />
-        <input
-          type="text"
-          placeholder="Filter by Metric..."
-          value={filter.metricName}
-          onChange={(e) => setFilter(prev => ({ ...prev, metricName: e.target.value }))}
-          className="filter-input"
-        />
-        <button
-          onClick={() => setFilter({ deviceId: '', metricName: '' })}
-          className="clear-filter-btn"
-        >
-          Clear Filters
-        </button>
-        <button
-          onClick={() => setShowGraph(!showGraph)}
-          className="visualize-btn"
-        >
-          Visualize
-        </button>
       </div>
 
       {showGraph && (
@@ -448,32 +411,38 @@ const RealTimeMonitor = () => {
             {isConnected ? 'Waiting for data...' : 'Connecting to data stream...'}
           </div>
         ) : (
-          <div className="data-list">
-            {filteredDataPoints.map((dp, index) => (
-              <div key={`${dp.device_id}-${dp.timestamp}-${index}`} className="data-item">
-                <div className="data-item-header">
-                  <span
-                    className="device-badge"
-                    style={{ backgroundColor: getDeviceColor(dp.device_id) }}
-                  >
-                    {dp.device_id}
-                  </span>
-                  <span className="metric-name">{dp.metric_name}</span>
-                  <span className="received-time">{formatReceivedTime(dp.received_at)}</span>
-                </div>
-                <div className="data-item-body">
-                  <div className="data-field">
-                    <span className="field-label">Value:</span>
-                    <span className="field-value value-highlight">{dp.value.toFixed(2)}</span>
+          <TransitionGroup className="data-list" component="div">
+            {filteredDataPoints.map((dp) => (
+              <CSSTransition
+                key={dp.received_at}
+                timeout={500}
+                classNames="data-item-anim"
+              >
+                <div className="data-item">
+                  <div className="data-item-header">
+                    <span
+                      className="device-badge"
+                      style={{ backgroundColor: getDeviceColor(dp.device_id) }}
+                    >
+                      {dp.device_id}
+                    </span>
+                    <span className="metric-name">{dp.metric_name}</span>
+                    <span className="received-time">{formatReceivedTime(dp.received_at)}</span>
                   </div>
-                  <div className="data-field">
-                    <span className="field-label">Timestamp:</span>
-                    <span className="field-value">{formatTimestamp(dp.timestamp)}</span>
+                  <div className="data-item-body">
+                    <div className="data-field">
+                      <span className="field-label">Value:</span>
+                      <span className="field-value value-highlight">{dp.value.toFixed(2)}</span>
+                    </div>
+                    <div className="data-field">
+                      <span className="field-label">Timestamp:</span>
+                      <span className="field-value">{formatTimestamp(dp.timestamp)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </CSSTransition>
             ))}
-          </div>
+          </TransitionGroup>
         )}
       </div>
     </div>
