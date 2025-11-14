@@ -2,6 +2,23 @@ import React, { useState, useEffect } from 'react';
 import './QueryForm.css';
 
 const QueryForm = ({ onSubmit, loading, onClearResults }) => {
+  // Helper function to format device ID aesthetically
+  const formatDeviceId = (deviceId) => {
+    if (!deviceId) return '';
+    // Convert "sensor_1" to "Sensor 1", "sensor_2" to "Sensor 2", etc.
+    return deviceId
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Helper function to format metric name aesthetically
+  const formatMetricName = (metricName) => {
+    if (!metricName) return '';
+    // Convert "temperature" to "Temperature"
+    return metricName.charAt(0).toUpperCase() + metricName.slice(1);
+  };
+
   const [formData, setFormData] = useState({
     device_id: '',
     metric_name: '',
@@ -769,7 +786,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             <option value="" disabled hidden>Choose device</option>
             {deviceIds.map((deviceId) => (
               <option key={deviceId} value={deviceId}>
-                {deviceId}
+                {formatDeviceId(deviceId)}
               </option>
             ))}
           </select>
@@ -787,7 +804,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             <option value="" disabled hidden>Choose metric</option>
             {metricNames.map((metricName) => (
               <option key={metricName} value={metricName}>
-                {metricName}
+                {formatMetricName(metricName)}
               </option>
             ))}
           </select>
@@ -802,10 +819,10 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             onChange={handleChange}
             required
           >
-            <option value="avg">Average (avg)</option>
+            <option value="avg">Average</option>
             <option value="sum">Sum</option>
-            <option value="max">Maximum (max)</option>
-            <option value="min">Minimum (min)</option>
+            <option value="max">Maximum</option>
+            <option value="min">Minimum</option>
           </select>
         </div>
 
@@ -1012,15 +1029,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             type="button"
             onClick={handleDeleteAllData}
             disabled={!formData.device_id || !formData.metric_name || loading}
-            className="time-btn"
-            style={{
-              backgroundColor: 'transparent',
-              border: '1px solid #ff4444',
-              color: '#ff4444',
-              padding: '10px 20px',
-              cursor: (!formData.device_id || !formData.metric_name || loading) ? 'not-allowed' : 'pointer',
-              opacity: (!formData.device_id || !formData.metric_name || loading) ? 0.5 : 1,
-            }}
+            className="delete-btn"
           >
             Delete All Data
           </button>

@@ -121,10 +121,15 @@
   font-weight: 500;
 }
 
-.time-btn:hover {
+.time-btn:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.4);
   transform: translateY(-1px);
+}
+
+.time-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .submit-btn {
@@ -150,6 +155,33 @@
 }
 
 .submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-btn {
+  padding: 15px 30px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 10px;
+  color: #ff4444;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.1);
+}
+
+.delete-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
