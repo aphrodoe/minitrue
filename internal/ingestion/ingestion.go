@@ -11,9 +11,6 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// DataPoint represents a single measurement from a device
-// The combination of DeviceID and MetricName will be used to distribute primaries across nodes
-// to avoid one node being primary for all data of a device.
 type DataPoint struct {
 	DeviceID   string  `json:"device_id"`
 	MetricName string  `json:"metric_name"`

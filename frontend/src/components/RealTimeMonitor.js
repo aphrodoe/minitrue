@@ -3,20 +3,16 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './RealTimeMonitor.css';
 
 const RealTimeMonitor = () => {
-  // Helper function to format device ID aesthetically
   const formatDeviceId = (deviceId) => {
     if (!deviceId) return '';
-    // Convert "sensor_1" to "Sensor 1", "sensor_2" to "Sensor 2", etc.
     return deviceId
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  // Helper function to format metric name aesthetically
   const formatMetricName = (metricName) => {
     if (!metricName) return '';
-    // Convert "temperature" to "Temperature"
     return metricName.charAt(0).toUpperCase() + metricName.slice(1);
   };
 

@@ -9,13 +9,11 @@ import (
 	"github.com/minitrue/pkg/models"
 )
 
-// MessageHandler handles incoming TCP messages and routes them to gossip protocol
 type MessageHandler struct {
 	gossipProtocol *cluster.GossipProtocol
 	hashRingUpdater func(nodeID string, add bool)
 }
 
-// NewMessageHandler creates a new message handler
 func NewMessageHandler(gossipProtocol *cluster.GossipProtocol, hashRingUpdater func(string, bool)) *MessageHandler {
 	return &MessageHandler{
 		gossipProtocol: gossipProtocol,
@@ -23,7 +21,6 @@ func NewMessageHandler(gossipProtocol *cluster.GossipProtocol, hashRingUpdater f
 	}
 }
 
-// HandleMessage processes incoming messages
 func (mh *MessageHandler) HandleMessage(data []byte, conn net.Conn) error {
 	var msg models.InternalMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
@@ -32,7 +29,6 @@ func (mh *MessageHandler) HandleMessage(data []byte, conn net.Conn) error {
 
 	switch msg.Type {
 	case "gossip":
-		// Extract gossip message from payload
 		payloadBytes, err := json.Marshal(msg.Payload)
 		if err != nil {
 			return err
@@ -43,10 +39,8 @@ func (mh *MessageHandler) HandleMessage(data []byte, conn net.Conn) error {
 			return err
 		}
 
-		// Handle gossip message
 		mh.gossipProtocol.HandleGossipMessage(gossipMsg)
 		
-		// Update hash ring based on discovered nodes
 		mh.updateHashRingFromGossip(gossipMsg)
 
 	default:
@@ -56,7 +50,6 @@ func (mh *MessageHandler) HandleMessage(data []byte, conn net.Conn) error {
 	return nil
 }
 
-// updateHashRingFromGossip updates the consistent hash ring based on gossip messages
 func (mh *MessageHandler) updateHashRingFromGossip(msg models.GossipMessage) {
 	hashRing := GetHashRing()
 	if hashRing == nil {
@@ -68,7 +61,6 @@ func (mh *MessageHandler) updateHashRingFromGossip(msg models.GossipMessage) {
 		currentNodes[nodeID] = true
 	}
 
-	// Add new nodes discovered via gossip
 	for nodeID, nodeInfo := range msg.State.Nodes {
 		if nodeInfo.Status == "active" && !currentNodes[nodeID] {
 			log.Printf("[MessageHandler] Adding node %s to hash ring", nodeID)

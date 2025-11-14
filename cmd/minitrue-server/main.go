@@ -31,32 +31,25 @@ func main() {
 	seedNodes := flag.String("seeds", "", "comma-separated list of seed node addresses (e.g., localhost:9001,localhost:9002)")
 	flag.Parse()
 
-	// Store original command line arguments for restart
 	originalArgs := os.Args
 	executable, err := os.Executable()
 	if err != nil {
-		// Fallback to os.Args[0] if Executable() fails
 		executable = os.Args[0]
 	}
 
-	// Create restart function
 	restartFn := func() {
 		log.Printf("[Restart] Restarting server...")
 
 		var cmd *exec.Cmd
 
-		// Check if we're running via "go run" (temp binary in go-build* directories)
-		// This works for Linux (/tmp/go-build*), macOS (/var/folders/.../go-build*), Windows
 		execPath := strings.ToLower(executable)
 		if strings.Contains(execPath, "go-build") ||
 			strings.Contains(execPath, filepath.Join("tmp", "go-build")) ||
 			strings.Contains(execPath, filepath.Join("var", "folders")) {
-			// Running via go run - use go run with source file
 			args := []string{"run", "cmd/minitrue-server/main.go"}
 			args = append(args, originalArgs[1:]...)
 			cmd = exec.Command("go", args...)
 		} else {
-			// Running compiled binary - use executable directly
 			cmd = exec.Command(executable, originalArgs[1:]...)
 		}
 
@@ -64,21 +57,17 @@ func main() {
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 
-		// Start the new process
 		if err := cmd.Start(); err != nil {
 			log.Printf("[Restart] Failed to restart: %v", err)
 			return
 		}
 
-		// Give it a moment to start
 		time.Sleep(200 * time.Millisecond)
 
-		// Exit current process
 		log.Printf("[Restart] Exiting current process...")
 		os.Exit(0)
 	}
 
-	// Auto-assign ports based on node ID if not specified
 	actualTCPPort := *tcpPort
 	if actualTCPPort == 0 {
 		actualTCPPort = getDefaultTCPPort(*nodeID)
@@ -99,7 +88,6 @@ func main() {
 	store := storage.NewUnifiedStorage(storageFile)
 	defer store.Close()
 
-	// Initialize cluster manager (gossip protocol + TCP server)
 	localNode := &models.NodeInfo{
 		ID:       *nodeID,
 		Address:  fmt.Sprintf("localhost:%d", actualTCPPort),
@@ -158,8 +146,6 @@ func main() {
 	log.Printf("[%s] Shutting down...", *nodeID)
 }
 
-// getDefaultTCPPort returns a default TCP port based on node ID
-// ing1 -> 9000, ing2 -> 9001, ing3 -> 9002, etc.
 func getDefaultTCPPort(nodeID string) int {
 	if len(nodeID) >= 3 && nodeID[:3] == "ing" {
 		if len(nodeID) > 3 {
@@ -169,12 +155,9 @@ func getDefaultTCPPort(nodeID string) int {
 			}
 		}
 	}
-	// Default fallback
 	return 9000
 }
 
-// getDefaultHTTPPort returns a default HTTP port based on node ID
-// ing1 -> 8080, ing2 -> 8081, ing3 -> 8082, etc.
 func getDefaultHTTPPort(nodeID string) int {
 	if len(nodeID) >= 3 && nodeID[:3] == "ing" {
 		if len(nodeID) > 3 {
@@ -184,6 +167,5 @@ func getDefaultHTTPPort(nodeID string) int {
 			}
 		}
 	}
-	// Default fallback
 	return 8080
 }

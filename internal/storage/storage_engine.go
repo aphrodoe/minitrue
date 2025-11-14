@@ -11,7 +11,7 @@ import (
 
 const (
 	MagicNumber     = 0x50415251
-	FormatVersion   = 2 // Version 2 includes device_id and metric_name
+	FormatVersion   = 2 
 	HeaderSize      = 32
 	MetadataVersion = 1
 )
@@ -102,7 +102,7 @@ func (se *StorageEngine) buildHeader(recordCount int) []byte {
 	binary.LittleEndian.PutUint32(header[0:4], MagicNumber)
 	binary.LittleEndian.PutUint32(header[4:8], FormatVersion)
 	binary.LittleEndian.PutUint64(header[8:16], uint64(recordCount))
-	binary.LittleEndian.PutUint32(header[16:20], 4) // 4 columns: timestamp, value, device_id, metric_name
+	binary.LittleEndian.PutUint32(header[16:20], 4)
 	copy(header[20:], []byte("TSDB"))
 	return header
 }
@@ -118,16 +118,13 @@ func (se *StorageEngine) encodeCompressedColumn(compressedData []byte) []byte {
 	return result
 }
 
-// encodeStringColumn encodes a slice of strings as length-prefixed strings
 func (se *StorageEngine) encodeStringColumn(strings []string) []byte {
 	result := make([]byte, 0, 1024)
 	
-	// Write number of strings
 	countBuf := make([]byte, 4)
 	binary.LittleEndian.PutUint32(countBuf, uint32(len(strings)))
 	result = append(result, countBuf...)
 	
-	// Write each string as length-prefixed
 	for _, s := range strings {
 		lenBuf := make([]byte, 4)
 		binary.LittleEndian.PutUint32(lenBuf, uint32(len(s)))
@@ -138,7 +135,6 @@ func (se *StorageEngine) encodeStringColumn(strings []string) []byte {
 	return result
 }
 
-// decodeStringColumn decodes a slice of strings from length-prefixed format
 func (se *StorageEngine) decodeStringColumn(data []byte, count int) ([]string, error) {
 	if len(data) < 4 {
 		return nil, fmt.Errorf("insufficient data for string column")
@@ -255,14 +251,12 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	footer := data[footerStart:footerSizeOffset]
 	numColumns := binary.LittleEndian.Uint32(footer[4:8])
 	
-	// Support both version 1 (2 columns) and version 2 (4 columns)
 	if numColumns != 2 && numColumns != 4 {
 		return nil, fmt.Errorf("unexpected number of columns: %d", numColumns)
 	}
 
 	pos := 8
 	
-	// Read timestamp column
 	timestampNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(timestampNameLen)
 	pos += 4
@@ -271,7 +265,6 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 	timestampSize := binary.LittleEndian.Uint64(footer[pos : pos+8])
 	pos += 8 + 8
 
-	// Read value column
 	valueNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(valueNameLen)
 	pos += 4
@@ -288,20 +281,18 @@ func (se *StorageEngine) Read() ([]models.Record, error) {
 
 	records := make([]models.Record, recordCount)
 	
-	// Handle version 1 files (no device_id/metric_name)
 	if formatVersion == 1 || numColumns == 2 {
 		for i := 0; i < recordCount; i++ {
 			records[i] = models.Record{
 				Timestamp:  timestamps[i],
 				Value:      values[i],
-				DeviceID:   "", // Empty for version 1 files
-				MetricName: "", // Empty for version 1 files
+				DeviceID:   "", 
+				MetricName: "",
 			}
 		}
 		return records, nil
 	}
 	
-	// Handle version 2 files (with device_id/metric_name)
 	deviceIDNameLen := binary.LittleEndian.Uint32(footer[pos : pos+4])
 	pos += 4 + int(deviceIDNameLen)
 	pos += 4

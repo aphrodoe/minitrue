@@ -11,6 +11,13 @@ A decentralized time-series database for IoT data, built in Go. Uses consistent 
 - **HTTP API**: Query aggregated data across nodes
 - **React Frontend**: Web interface for querying data
 
+## Team
+
+- Akhil Dhyani (B24CS1005)
+- Divyansh Yadav (B24CS1027)
+- Harshit Deora (B24CM1078)
+- Gaurang Goyal (B24CM1071)
+
 ## Prerequisites
 
 - Go 1.21+
@@ -56,19 +63,6 @@ mosquitto     # Windows
 ```
 
 ### 3. Run Cluster
-
-**Windows:**
-```powershell
-.\run_cluster.bat
-```
-
-**Linux/macOS:**
-```bash
-chmod +x run_cluster.sh
-./run_cluster.sh
-```
-
-Or manually start nodes:
 
 **Terminal 1 - Node 1 (Ingestion + Query):**
 ```bash

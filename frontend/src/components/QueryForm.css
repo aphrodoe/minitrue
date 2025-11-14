@@ -50,7 +50,6 @@
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Style the select dropdown menu */
 .form-group select {
   padding: 12px;
   border: 1px solid rgba(255, 255, 255, 0.2);

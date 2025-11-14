@@ -57,7 +57,7 @@ type Service struct {
 	nodeID     string
 	httpClient *http.Client
 	wsHub      *websocket.Hub
-	restartFn  func() // Function to trigger server restart
+	restartFn  func() 
 }
 
 func New(m *mqttclient.Client, s storage.Storage) *Service {
@@ -228,7 +228,6 @@ func (s *Service) handleQuery(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(out)
 }
 
-// distributedQuery queries only the nodes that should hold the data (primary + replicas)
 func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 	hashRing := cluster.GetHashRing()
 	if hashRing == nil {
@@ -264,9 +263,7 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 		}
 	}()
 
-	// Query remote nodes
 	for _, nodeID := range selectedNodes {
-		// Skip local node if it's in the list
 		if s.nodeID != "" && nodeID == s.nodeID {
 			continue
 		}
@@ -289,13 +286,11 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 	close(resultChan)
 	close(errorChan)
 
-	// Aggregate all samples
 	allSamples := make([]float64, 0)
 	for samples := range resultChan {
 		allSamples = append(allSamples, samples...)
 	}
 
-	// If we got errors but no results, return error
 	if len(allSamples) == 0 && len(errorChan) > 0 {
 		return nil, fmt.Errorf("all queries failed")
 	}
@@ -304,14 +299,12 @@ func (s *Service) distributedQuery(qr QueryRequest) ([]float64, error) {
 	return allSamples, nil
 }
 
-// distributedQueryAggregated queries only the nodes that should hold the data (primary + replicas) and aggregates stats
 func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStats, error) {
 	hashRing := cluster.GetHashRing()
 	if hashRing == nil {
 		return storage.QueryStats{}, fmt.Errorf("hash ring not initialized")
 	}
 
-	// Use same keying as ingestion to target the right nodes
 	key := qr.DeviceID + ":" + qr.MetricName
 	selectedNodes := cluster.GetNodesForKey(key, 2)
 	if len(selectedNodes) == 0 {
@@ -320,12 +313,10 @@ func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStat
 
 	log.Printf("[Query] Querying %d nodes for device=%s metric=%s", len(selectedNodes), qr.DeviceID, qr.MetricName)
 
-	// Query nodes concurrently
 	var wg sync.WaitGroup
 	resultChan := make(chan storage.QueryStats, len(selectedNodes)+1)
 	errorChan := make(chan error, len(selectedNodes)+1)
 
-	// Query local node first
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -340,9 +331,7 @@ func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStat
 		}
 	}()
 
-	// Query remote nodes
 	for _, nodeID := range selectedNodes {
-		// Skip local node if it's in the list
 		if s.nodeID != "" && nodeID == s.nodeID {
 			continue
 		}
@@ -365,16 +354,13 @@ func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStat
 	close(resultChan)
 	close(errorChan)
 
-	// Collect all stats
 	allStats := make([]storage.QueryStats, 0)
 	for stats := range resultChan {
 		allStats = append(allStats, stats)
 	}
 
-	// Combine stats
 	combined := combineStats(allStats)
 
-	// If we got errors but no results, return error
 	if combined.Count == 0 && len(errorChan) > 0 {
 		return storage.QueryStats{}, fmt.Errorf("all queries failed")
 	}
@@ -383,9 +369,7 @@ func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStat
 	return combined, nil
 }
 
-// queryRemoteNode queries a remote node via HTTP to get raw samples
 func (s *Service) queryRemoteNode(nodeID string, qr QueryRequest) ([]float64, error) {
-	// Get node port from cluster manager (gossip protocol)
 	clusterMgr := cluster.GetClusterManager()
 	if clusterMgr == nil {
 		return nil, fmt.Errorf("cluster manager not initialized")
@@ -393,14 +377,12 @@ func (s *Service) queryRemoteNode(nodeID string, qr QueryRequest) ([]float64, er
 
 	nodePort, err := clusterMgr.GetNodeHTTPPort(nodeID)
 	if err != nil {
-		// Fallback to static port mapping if gossip hasn't discovered the node yet
 		nodePort = s.getNodePort(nodeID)
 		if nodePort == 0 {
 			return nil, fmt.Errorf("unknown node port for %s: %w", nodeID, err)
 		}
 	}
 
-	// Query the /query-samples endpoint to get raw samples
 	url := fmt.Sprintf("http://localhost:%d/query-samples", nodePort)
 
 	reqBody, err := json.Marshal(qr)
@@ -436,7 +418,6 @@ func (s *Service) queryRemoteNode(nodeID string, qr QueryRequest) ([]float64, er
 	return samplesResponse.Samples, nil
 }
 
-// queryRemoteNodeAggregated queries a remote node via HTTP to get aggregated stats
 func (s *Service) queryRemoteNodeAggregated(nodeID string, qr QueryRequest) (storage.QueryStats, error) {
 	port := s.getNodePort(nodeID)
 	if port == 0 {
@@ -476,10 +457,7 @@ func (s *Service) queryRemoteNodeAggregated(nodeID string, qr QueryRequest) (sto
 	return stats, nil
 }
 
-// getNodePort returns the HTTP port for a node
-// This is a simplified implementation - in production, use gossip protocol
 func (s *Service) getNodePort(nodeID string) int {
-	// Default port mapping - in production, get from gossip protocol
 	portMap := map[string]int{
 		"ing1": 8080,
 		"ing2": 8081,
@@ -491,7 +469,6 @@ func (s *Service) getNodePort(nodeID string) int {
 	return 0
 }
 
-// handleQuerySamples handles requests for raw samples (used by distributed queries)
 func (s *Service) handleQuerySamples(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -533,7 +510,6 @@ func (s *Service) handleQuerySamples(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(response)
 }
 
-// handleQueryAggregated handles requests for aggregated stats (used by distributed queries)
 func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -569,7 +545,6 @@ func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) 
 	_ = json.NewEncoder(w).Encode(stats)
 }
 
-// handleDelete handles DELETE requests to remove all data for a device/metric
 func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
@@ -605,7 +580,6 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete from local storage
 	if err := s.store.Delete(deleteReq.DeviceID, deleteReq.MetricName); err != nil {
 		log.Printf("[Delete] Error deleting data: %v", err)
 		http.Error(w, "storage error", http.StatusInternalServerError)
@@ -621,12 +595,10 @@ func (s *Service) handleDelete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(response)
 
-	// Trigger server restart after successful delete
 	if s.restartFn != nil {
 		log.Printf("[Delete] Triggering server restart...")
-		// Use a goroutine to restart after response is sent
 		go func() {
-			time.Sleep(100 * time.Millisecond) // Small delay to ensure response is sent
+			time.Sleep(100 * time.Millisecond)
 			s.restartFn()
 		}()
 	}

@@ -28,7 +28,6 @@
   margin-top: 20px;
 }
 
-/* Gradient text takes precedence */
 .App .animated-gradient-text h1 {
   color: transparent;
 }

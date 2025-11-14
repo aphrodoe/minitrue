@@ -4,24 +4,19 @@ import './QueryResults.css';
 const QueryResults = ({ result }) => {
   if (!result) return null;
 
-  // Helper function to format device ID aesthetically
   const formatDeviceId = (deviceId) => {
     if (!deviceId) return '';
-    // Convert "sensor_1" to "Sensor 1", "sensor_2" to "Sensor 2", etc.
     return deviceId
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  // Helper function to format metric name aesthetically
   const formatMetricName = (metricName) => {
     if (!metricName) return '';
-    // Convert "temperature" to "Temperature"
     return metricName.charAt(0).toUpperCase() + metricName.slice(1);
   };
 
-  // Helper function to format operation name
   const formatOperation = (operation) => {
     const operationMap = {
       'avg': 'Average',
@@ -33,7 +28,6 @@ const QueryResults = ({ result }) => {
   };
 
   const formatDuration = (nanoseconds) => {
-    // Backend now returns nanoseconds directly
     if (!nanoseconds || nanoseconds === 0) {
       return (
         <>
@@ -42,7 +36,6 @@ const QueryResults = ({ result }) => {
       );
     }
     
-    // Format with commas for readability on large numbers
     return (
       <>
         {nanoseconds.toLocaleString()} <span className="duration-unit">nanoseconds</span>

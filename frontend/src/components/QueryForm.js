@@ -2,27 +2,23 @@ import React, { useState, useEffect } from 'react';
 import './QueryForm.css';
 
 const QueryForm = ({ onSubmit, loading, onClearResults }) => {
-  // Helper function to format device ID aesthetically
   const formatDeviceId = (deviceId) => {
     if (!deviceId) return '';
-    // Convert "sensor_1" to "Sensor 1", "sensor_2" to "Sensor 2", etc.
     return deviceId
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  // Helper function to format metric name aesthetically
   const formatMetricName = (metricName) => {
     if (!metricName) return '';
-    // Convert "temperature" to "Temperature"
     return metricName.charAt(0).toUpperCase() + metricName.slice(1);
   };
 
   const [formData, setFormData] = useState({
     device_id: '',
     metric_name: '',
-    operation: 'avg', // Default operation
+    operation: 'avg', 
     start_time: 0,
     end_time: 0,
   });
@@ -35,15 +31,12 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
   const [startTimeError, setStartTimeError] = useState(null);
   const [endTimeError, setEndTimeError] = useState(null);
 
-  // Convert 12-hour format string to Unix timestamp
-  // Returns { timestamp: number, error: string | null }
   const parse12HourToUnix = (timeString) => {
     if (!timeString || timeString.trim() === '' || timeString === '0') {
       return { timestamp: 0, error: null };
     }
     
     try {
-      // Format: "MM/DD/YYYY HH:MM AM/PM" or "MM/DD/YYYY HH:MMAM/PM"
       const cleaned = timeString.trim().replace(/\s+/g, ' ');
       const parts = cleaned.split(' ');
       
@@ -51,16 +44,14 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
         return { timestamp: 0, error: 'Invalid format. Use: MM/DD/YYYY HH:MM AM/PM' };
       }
       
-      const datePart = parts[0]; // MM/DD/YYYY
-      const timePart = parts[1]; // HH:MM
-      const ampm = parts[2].toUpperCase(); // AM or PM
+      const datePart = parts[0];
+      const timePart = parts[1]; 
+      const ampm = parts[2].toUpperCase(); 
       
-      // Validate AM/PM
       if (ampm !== 'AM' && ampm !== 'PM') {
         return { timestamp: 0, error: 'Invalid AM/PM. Use AM or PM' };
       }
       
-      // Validate date format
       const dateParts = datePart.split('/');
       if (dateParts.length !== 3) {
         return { timestamp: 0, error: 'Invalid date format. Use: MM/DD/YYYY' };
@@ -68,7 +59,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       
       const [month, day, year] = dateParts.map(Number);
       
-      // Validate date values
       if (isNaN(month) || isNaN(day) || isNaN(year)) {
         return { timestamp: 0, error: 'Date must be numbers. Use: MM/DD/YYYY' };
       }
@@ -93,7 +83,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       
       const [hours, minutes] = timeParts.map(Number);
       
-      // Validate time values
       if (isNaN(hours) || isNaN(minutes)) {
         return { timestamp: 0, error: 'Time must be numbers. Use: HH:MM' };
       }
@@ -115,7 +104,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       
       const date = new Date(year, month - 1, day, hour24, minutes || 0);
       
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         return { timestamp: 0, error: 'Invalid date. Please check the date values' };
       }
@@ -128,7 +116,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     }
   };
 
-  // Convert Unix timestamp to 12-hour format string
   const unixTo12Hour = (unixTimestamp) => {
     if (!unixTimestamp || unixTimestamp === 0) return '';
     
@@ -142,14 +129,13 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     const ampm = hours >= 12 ? 'PM' : 'AM';
     
     hours = hours % 12;
-    hours = hours ? hours : 12; // 0 should be 12
+    hours = hours ? hours : 12;
     const hoursStr = String(hours).padStart(2, '0');
     
     return `${month}/${day}/${year} ${hoursStr}:${minutes} ${ampm}`;
   };
 
   useEffect(() => {
-    // Try to fetch device IDs from API if endpoint exists
     const fetchDeviceIds = async () => {
       try {
         const response = await fetch('/devices');
@@ -160,13 +146,11 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
           }
         }
       } catch (err) {
-        // If endpoint doesn't exist, use default list
         console.log('Using default device list');
       }
     };
     fetchDeviceIds();
 
-    // Try to fetch metric names from API if endpoint exists
     const fetchMetricNames = async () => {
       try {
         const response = await fetch('/metrics');
@@ -177,7 +161,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
           }
         }
       } catch (err) {
-        // If endpoint doesn't exist, use default list
         console.log('Using default metric list');
       }
     };
@@ -185,7 +168,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
   }, []);
 
   const validateTimeRange = (startTime, endTime, startDisplay, endDisplay, startError, endError) => {
-    // First check for format errors
     if (startError) {
       setTimeError(`Start time: ${startError}`);
       return false;
@@ -198,18 +180,14 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     
     setTimeError('');
     
-    // If both are 0, it means "all data" - that's valid
     if (startTime === 0 && endTime === 0) {
       return true;
     }
     
-    // If start_time is 0 (epoch) and end_time is set, this is valid for "All Data" button
     if (startTime === 0 && endTime !== 0 && endTime > 0) {
-      // This is valid - "All Data" sets start to epoch (0) and end to now
       return true;
     }
     
-    // If end is 0 but start is set, that's invalid
     if (endTime === 0 && startTime !== 0) {
       if (startDisplay && startDisplay.trim() !== '') {
         setTimeError('Please enter an end time or use "All Data" button.');
@@ -217,7 +195,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       }
     }
     
-    // If both are set, validate they make sense
     if (startTime !== 0 && endTime !== 0) {
       if (startTime >= endTime) {
         setTimeError('Start time must be before end time.');
@@ -239,7 +216,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     return true;
   };
 
-  // Create input mask with pre-filled separators: MM/DD/YYYY HH:MM AM
   const createTimeMask = (digits) => {
     const mask = 'MM/DD/YYYY HH:MM AM';
     const digitsArray = digits.split('');
@@ -249,7 +225,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     for (let i = 0; i < mask.length; i++) {
       const char = mask[i];
       if (char === 'M' || char === 'D' || char === 'Y' || char === 'H' || char === 'A') {
-        // Replace placeholder with digit or keep placeholder
         if (digitIndex < digitsArray.length) {
           result += digitsArray[digitIndex];
           digitIndex++;
@@ -257,7 +232,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
           result += char;
         }
       } else {
-        // Keep separators (/ : space)
         result += char;
       }
     }
@@ -265,35 +239,28 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     return result;
   };
 
-  // Format input as user types: MM/DD/YYYY HH:MM AM/PM
   const formatTimeInput = (value) => {
-    // Extract only digits
     const digitsOnly = value.replace(/[^0-9]/g, '');
     
-    // Check for AM/PM - look for A, P, AM, PM (case insensitive)
     let ampm = '';
     const upperValue = value.toUpperCase();
     
-    // Check if user typed "A" or "AM"
     if (upperValue.includes('AM') || (upperValue.includes('A') && !upperValue.includes('PM'))) {
       ampm = 'AM';
     } else if (upperValue.includes('PM') || (upperValue.includes('P') && !upperValue.includes('AM'))) {
       ampm = 'PM';
     }
     
-    // Also check for "1" for AM or "2" for PM at the end (alternative input)
     if (!ampm && digitsOnly.length > 12) {
       const lastChar = digitsOnly[digitsOnly.length - 1];
       if (lastChar === '1') {
         ampm = 'AM';
-        // Remove the "1" from digits
         const digits = digitsOnly.slice(0, -1).slice(0, 12);
         let formatted = createTimeMask(digits);
         formatted = formatted.replace('AM', 'AM');
         return formatted;
       } else if (lastChar === '2') {
         ampm = 'PM';
-        // Remove the "2" from digits
         const digits = digitsOnly.slice(0, -1).slice(0, 12);
         let formatted = createTimeMask(digits);
         formatted = formatted.replace('AM', 'PM');
@@ -301,30 +268,23 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       }
     }
     
-    // Limit to 12 digits (MMDDYYYYHHMM)
     const digits = digitsOnly.slice(0, 12);
     
-    // Create mask with digits filled in
     let formatted = createTimeMask(digits);
     
-    // Replace AM placeholder with actual AM/PM
     if (ampm) {
       formatted = formatted.replace('AM', ampm);
     }
-    // If no AM/PM specified but we have 12 digits, keep AM as placeholder
-    // User can type "A" or "P" to change it
     
     return formatted;
   };
 
-  // Calculate cursor position after formatting, skipping separators
+
   const getNewCursorPosition = (oldValue, newValue, oldCursorPos) => {
-    // Count digits/placeholders before cursor in old value (excluding separators)
     const charsBeforeCursor = oldValue.slice(0, oldCursorPos);
     const digitPlaceholderCount = charsBeforeCursor.replace(/[\/\s:]/g, '').length;
     
     if (digitPlaceholderCount === 0) {
-      // Find first digit/placeholder position
       for (let i = 0; i < newValue.length; i++) {
         if (/\d/.test(newValue[i]) || /[MDYHA]/.test(newValue[i])) {
           return i;
@@ -333,28 +293,21 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       return 0;
     }
     
-    // Find position in new value where we have that many digits/placeholders
     let charCount = 0;
     for (let i = 0; i < newValue.length; i++) {
       const char = newValue[i];
-      // Count only digits and placeholders, skip separators
       if (/\d/.test(char) || /[MDYHA]/.test(char)) {
         charCount++;
         if (charCount === digitPlaceholderCount) {
-          // Place cursor right after this character, but skip if next is separator
           let nextPos = i + 1;
-          // Skip separators to find next valid position
           while (nextPos < newValue.length && /[\/\s:]/.test(newValue[nextPos])) {
             nextPos++;
           }
-          // If there's a next digit/placeholder, place cursor before it
-          // Otherwise place after current character
           return nextPos < newValue.length ? nextPos : i + 1;
         }
       }
     }
     
-    // If we couldn't find the exact position, find the next available position
     let charCount2 = 0;
     for (let i = 0; i < newValue.length; i++) {
       const char = newValue[i];
@@ -366,28 +319,23 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       }
     }
     
-    // Return end of string
     return newValue.length;
   };
 
   const handleKeyDown = (e) => {
     const { name, value, selectionStart } = e.target;
     
-    // Handle backspace to skip separators
     if (e.key === 'Backspace' && selectionStart > 0) {
       const currentPos = selectionStart;
       const charBefore = value[currentPos - 1];
       
-      // If backspacing a separator, jump to previous digit and delete it
       if (/[\/\s:]/.test(charBefore)) {
         e.preventDefault();
         let newPos = currentPos - 1;
-        // Find previous digit or placeholder
         while (newPos > 0 && /[\/\s:]/.test(value[newPos - 1])) {
           newPos--;
         }
         if (newPos > 0) {
-          // Delete the digit/placeholder before the separator
           const beforeSeparator = value.slice(0, newPos - 1);
           const afterSeparator = value.slice(currentPos);
           const newValue = beforeSeparator + afterSeparator;
@@ -396,7 +344,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             const formatted = formatTimeInput(newValue);
             setStartTimeDisplay(formatted);
             setTimeout(() => {
-              // Count digits before the deleted position
               const digitsBefore = beforeSeparator.replace(/[^0-9MDYHA]/gi, '').length;
               let pos = 0;
               let count = 0;
@@ -437,26 +384,21 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             }, 0);
           }
         }
-        return; // Don't let normal backspace handle this
+        return; 
       }
-      // Otherwise, let normal backspace work (for digits/placeholders)
     }
     
-    // Handle delete to skip separators
     if (e.key === 'Delete' && selectionStart < value.length) {
       const currentPos = selectionStart;
       const charAt = value[currentPos];
       
-      // If deleting a separator, jump to next digit and delete it
       if (/[\/\s:]/.test(charAt)) {
         e.preventDefault();
         let newPos = currentPos + 1;
-        // Find next digit or placeholder
         while (newPos < value.length && /[\/\s:]/.test(value[newPos])) {
           newPos++;
         }
         if (newPos < value.length) {
-          // Delete the digit/placeholder after the separator
           const before = value.slice(0, currentPos);
           const after = value.slice(newPos + 1);
           const newValue = before + after;
@@ -510,24 +452,18 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
     const oldValue = name === 'start_time_display' ? (startTimeDisplay || 'MM/DD/YYYY HH:MM AM') : (endTimeDisplay || 'MM/DD/YYYY HH:MM AM');
     
     if (name === 'start_time_display') {
-      // If it's the default mask, clear it
       if (value === 'MM/DD/YYYY HH:MM AM') {
         setStartTimeDisplay('');
         return;
       }
       
-      // Format the input automatically
       const formatted = formatTimeInput(value);
       setStartTimeDisplay(formatted);
       
-      // Calculate new cursor position based on actual input value (before formatting)
-      // Count how many digits/placeholders are in the raw input up to cursor position
       const rawInputBeforeCursor = value.slice(0, cursorPosition);
       const digitCount = rawInputBeforeCursor.replace(/[^0-9MDYHA]/gi, '').length;
       
-      // Find position in formatted string with same number of digits/placeholders
       setTimeout(() => {
-        // Find where AM/PM section starts (before the space and AM/PM)
         const ampmIndex = formatted.search(/\s+(AM|PM)$/i);
         const maxPos = ampmIndex > 0 ? ampmIndex : formatted.length;
         
@@ -537,13 +473,10 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
           if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
             count++;
             if (count === digitCount) {
-              // Place cursor right after this character
               pos = i + 1;
-              // Skip separators to get to next valid position
               while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                 pos++;
               }
-              // Don't go beyond AM/PM section
               if (pos >= maxPos) {
                 pos = maxPos;
               }
@@ -551,9 +484,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             }
           }
         }
-        // If we didn't find exact match, find the position where we have digitCount digits
         if (count < digitCount) {
-          // Try to find where we should be based on digit count
           count = 0;
           for (let i = 0; i < formatted.length; i++) {
             if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
@@ -563,7 +494,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
                 while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                   pos++;
                 }
-                // Don't go beyond AM/PM section
                 if (pos >= maxPos) {
                   pos = maxPos;
                 }
@@ -586,23 +516,18 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
         return newData;
       });
     } else if (name === 'end_time_display') {
-      // If it's the default mask, clear it
       if (value === 'MM/DD/YYYY HH:MM AM') {
         setEndTimeDisplay('');
         return;
       }
       
-      // Format the input automatically
       const formatted = formatTimeInput(value);
       setEndTimeDisplay(formatted);
       
-      // Calculate new cursor position based on actual input value (before formatting)
       const rawInputBeforeCursor = value.slice(0, cursorPosition);
       const digitCount = rawInputBeforeCursor.replace(/[^0-9MDYHA]/gi, '').length;
       
-      // Find position in formatted string with same number of digits/placeholders
       setTimeout(() => {
-        // Find where AM/PM section starts (before the space and AM/PM)
         const ampmIndex = formatted.search(/\s+(AM|PM)$/i);
         const maxPos = ampmIndex > 0 ? ampmIndex : formatted.length;
         
@@ -612,13 +537,10 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
           if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
             count++;
             if (count === digitCount) {
-              // Place cursor right after this character
               pos = i + 1;
-              // Skip separators to get to next valid position
               while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                 pos++;
               }
-              // Don't go beyond AM/PM section
               if (pos >= maxPos) {
                 pos = maxPos;
               }
@@ -626,9 +548,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             }
           }
         }
-        // If we didn't find exact match, find the position where we have digitCount digits
         if (count < digitCount) {
-          // Try to find where we should be based on digit count
           count = 0;
           for (let i = 0; i < formatted.length; i++) {
             if (/\d/.test(formatted[i]) || /[MDYHA]/.test(formatted[i])) {
@@ -638,7 +558,6 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
                 while (pos < formatted.length && /[\/\s:]/.test(formatted[pos])) {
                   pos++;
                 }
-                // Don't go beyond AM/PM section
                 if (pos >= maxPos) {
                   pos = maxPos;
                 }
@@ -671,14 +590,12 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Re-validate both times
     const startParse = parse12HourToUnix(startTimeDisplay);
     const endParse = parse12HourToUnix(endTimeDisplay);
     
     setStartTimeError(startParse.error);
     setEndTimeError(endParse.error);
     
-    // Validate time range before submitting
     if (!validateTimeRange(
       formData.start_time, 
       formData.end_time, 
@@ -687,7 +604,7 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       startParse.error,
       endParse.error
     )) {
-      return; // Don't submit if validation fails
+      return; 
     }
     
     onSubmit(formData);
@@ -724,12 +641,10 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       const data = await response.json();
       alert(`Success! ${data.message || 'Data deleted successfully.'}`);
       
-      // Clear query results
       if (onClearResults) {
         onClearResults();
       }
       
-      // Clear the form
       setFormData({
         device_id: '',
         metric_name: '',
@@ -760,12 +675,11 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       start_time: start,
       end_time: now,
     }));
-    // Format the times using the mask format
     const startFormatted = unixTo12Hour(start);
     const endFormatted = unixTo12Hour(now);
     setStartTimeDisplay(startFormatted || 'MM/DD/YYYY HH:MM AM');
     setEndTimeDisplay(endFormatted || 'MM/DD/YYYY HH:MM AM');
-    setTimeError(''); // Clear any previous errors
+    setTimeError(''); 
     setStartTimeError(null);
     setEndTimeError(null);
   };
@@ -840,20 +754,18 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
             type="button"
             onClick={() => {
               const now = getCurrentUnixTime();
-              // Set timestamps from epoch (Jan 1, 1970) to now to query all data
               const allDataQuery = {
                 ...formData,
-                start_time: 0, // Epoch start
-                end_time: now, // Current time
+                start_time: 0,
+                end_time: now,
               };
               setFormData(allDataQuery);
               
-              // Format the times for display
               const startFormatted = unixTo12Hour(0);
               const endFormatted = unixTo12Hour(now);
               setStartTimeDisplay(startFormatted || '01/01/1970 12:00 AM');
               setEndTimeDisplay(endFormatted || 'MM/DD/YYYY HH:MM AM');
-              setTimeError(''); // Clear any time errors
+              setTimeError(''); 
               setStartTimeError(null);
               setEndTimeError(null);
             }}

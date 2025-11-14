@@ -11,7 +11,6 @@ import (
 	"github.com/minitrue/pkg/network"
 )
 
-// ClusterManager manages the cluster coordination (gossip + hash ring)
 type ClusterManager struct {
 	gossipProtocol *cluster.GossipProtocol
 	hashRing       *cluster.ConsistentHashRing
@@ -24,7 +23,6 @@ var (
 	clusterManagerOnce   sync.Once
 )
 
-// GetClusterManager returns the global cluster manager instance
 func GetClusterManager() *ClusterManager {
 	clusterManagerOnce.Do(func() {
 		globalClusterManager = &ClusterManager{}
@@ -32,48 +30,38 @@ func GetClusterManager() *ClusterManager {
 	return globalClusterManager
 }
 
-// Initialize initializes the cluster manager with gossip protocol and TCP server
 func (cm *ClusterManager) Initialize(localNode *models.NodeInfo, tcpPort int, seedNodes []string) error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
-	// Initialize hash ring
 	cm.hashRing = GetHashRing()
 	if cm.hashRing == nil {
 		cm.hashRing = cluster.NewConsistentHashRing(150)
 		SetHashRing(cm.hashRing)
 	}
 
-	// Add local node to hash ring
 	cm.hashRing.AddNode(localNode.ID)
 
-	// Create network client
 	networkClient := network.NewClient(5 * time.Second)
 
-	// Create gossip protocol
 	cm.gossipProtocol = cluster.NewGossipProtocol(
 		localNode,
-		2*time.Second, // gossip interval
+		2*time.Second,
 		networkClient,
-		3, // replication factor
+		3,
 	)
 
-	// Add local node to gossip cluster state
 	cm.gossipProtocol.Start()
 
-	// Create message handler
 	messageHandler := NewMessageHandler(cm.gossipProtocol, cm.onNodeUpdate)
 
-	// Create TCP server
 	tcpAddress := fmt.Sprintf(":%d", tcpPort)
 	cm.server = network.NewServer(tcpAddress, messageHandler)
 
-	// Start TCP server
 	if err := cm.server.Start(); err != nil {
 		return fmt.Errorf("failed to start TCP server: %w", err)
 	}
 
-	// Try to connect to seed nodes
 	for _, seedAddr := range seedNodes {
 		if seedAddr != "" {
 			go func(addr string) {
@@ -86,13 +74,11 @@ func (cm *ClusterManager) Initialize(localNode *models.NodeInfo, tcpPort int, se
 		}
 	}
 
-	// Start periodic hash ring sync with gossip state
 	go cm.syncHashRingLoop()
 
 	return nil
 }
 
-// syncHashRingLoop periodically syncs the hash ring with the gossip cluster state
 func (cm *ClusterManager) syncHashRingLoop() {
 	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
@@ -102,7 +88,6 @@ func (cm *ClusterManager) syncHashRingLoop() {
 	}
 }
 
-// syncHashRing updates the hash ring to match the current gossip cluster state
 func (cm *ClusterManager) syncHashRing() {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -111,24 +96,19 @@ func (cm *ClusterManager) syncHashRing() {
 		return
 	}
 
-	// Get current cluster state from gossip
 	clusterState := cm.gossipProtocol.GetClusterState()
 	
-	// Get current nodes in hash ring
 	ringNodes := make(map[string]bool)
 	for _, nodeID := range cm.hashRing.GetAllNodes() {
 		ringNodes[nodeID] = true
 	}
 
-	// Update hash ring based on cluster state
 	for nodeID, nodeInfo := range clusterState.Nodes {
 		if nodeInfo.Status == "active" && !ringNodes[nodeID] {
-			// Node is active but not in ring - add it
 			cm.hashRing.AddNode(nodeID)
 			log.Printf("[Cluster] Synced: Added node %s to hash ring", nodeID)
 			ringNodes[nodeID] = true
 		} else if nodeInfo.Status == "down" && ringNodes[nodeID] {
-			// Node is down but still in ring - remove it
 			cm.hashRing.RemoveNode(nodeID)
 			log.Printf("[Cluster] Synced: Removed node %s from hash ring (down)", nodeID)
 			delete(ringNodes, nodeID)
@@ -136,7 +116,6 @@ func (cm *ClusterManager) syncHashRing() {
 	}
 }
 
-// onNodeUpdate is called when nodes are added or removed
 func (cm *ClusterManager) onNodeUpdate(nodeID string, add bool) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -154,21 +133,18 @@ func (cm *ClusterManager) onNodeUpdate(nodeID string, add bool) {
 	}
 }
 
-// GetGossipProtocol returns the gossip protocol instance
 func (cm *ClusterManager) GetGossipProtocol() *cluster.GossipProtocol {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
 	return cm.gossipProtocol
 }
 
-// GetHashRing returns the hash ring
 func (cm *ClusterManager) GetHashRing() *cluster.ConsistentHashRing {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
 	return cm.hashRing
 }
 
-// Stop stops the cluster manager
 func (cm *ClusterManager) Stop() error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -182,7 +158,6 @@ func (cm *ClusterManager) Stop() error {
 	return nil
 }
 
-// GetNodeHTTPPort returns the HTTP port for a node ID
 func (cm *ClusterManager) GetNodeHTTPPort(nodeID string) (int, error) {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
