@@ -5,6 +5,7 @@ import QueryResults from './components/QueryResults';
 import RealTimeMonitor from './components/RealTimeMonitor';
 import GradientText from './components/GradientText';
 import Particles from './components/Particles';
+import ClusterDashboard from './components/ClusterDashboard';
 import { fetchFromCluster } from './clusterClient';
 
 function App() {
@@ -78,6 +79,12 @@ function App() {
         >
           Real-Time Monitor
         </button>
+        <button
+          className={`tab-button ${activeTab === 'cluster' ? 'active' : ''}`}
+          onClick={() => setActiveTab('cluster')}
+        >
+          Cluster Health
+        </button>
       </div>
 
       <div className="tab-content">
@@ -118,6 +125,10 @@ function App() {
 
         <div style={{ display: activeTab === 'realtime' ? 'block' : 'none' }}>
           <RealTimeMonitor />
+        </div>
+
+        <div style={{ display: activeTab === 'cluster' ? 'block' : 'none' }}>
+          <ClusterDashboard />
         </div>
       </div>
     </div>
