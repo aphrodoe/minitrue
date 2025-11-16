@@ -72,7 +72,6 @@
   animation: gradient var(--animation-duration, 8s) linear infinite !important;
 }
 
-/* Override App.css styles */
 .animated-gradient-text .text-content h1,
 .animated-gradient-text .gradient-text-element {
   color: transparent !important;

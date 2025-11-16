@@ -1,21 +1,13 @@
-#!/usr/bin/env python3
-"""
-Script to view data from custom .parq files created by the minitrue storage engine.
-This implements the Gorilla compression decompression algorithm.
-"""
-
 import struct
 import sys
 from datetime import datetime
 from typing import List, Tuple
 
-# Constants from storage_engine.go
 MAGIC_NUMBER = 0x50415251
 HEADER_SIZE = 32
 
 
 class BitReader:
-    """Bit-level reader for decompressing Gorilla-compressed data."""
     
     def __init__(self, data: bytes):
         self.data = data
@@ -23,7 +15,6 @@ class BitReader:
         self.bit_pos = 0
     
     def read_bits(self, num_bits: int) -> Tuple[int, bool]:
-        """Read num_bits bits from the stream."""
         if self.pos >= len(self.data):
             return 0, False
         
@@ -37,7 +28,6 @@ class BitReader:
             bits_left_in_byte = 8 - self.bit_pos
             
             if bits_remaining >= bits_left_in_byte:
-                # Read all remaining bits in current byte
                 mask = (1 << bits_left_in_byte) - 1
                 bits = (self.data[self.pos] >> (8 - bits_left_in_byte - self.bit_pos)) & mask
                 result = (result << bits_left_in_byte) | bits
@@ -45,7 +35,6 @@ class BitReader:
                 self.pos += 1
                 self.bit_pos = 0
             else:
-                # Read partial bits
                 shift = bits_left_in_byte - bits_remaining
                 mask = (1 << bits_remaining) - 1
                 bits = (self.data[self.pos] >> shift) & mask
@@ -57,7 +46,6 @@ class BitReader:
 
 
 def count_leading_zeros(x: int) -> int:
-    """Count leading zeros in a 64-bit integer."""
     if x == 0:
         return 64
     n = 0
@@ -82,7 +70,6 @@ def count_leading_zeros(x: int) -> int:
 
 
 def count_trailing_zeros(x: int) -> int:
-    """Count trailing zeros in a 64-bit integer."""
     if x == 0:
         return 64
     n = 0
@@ -107,20 +94,17 @@ def count_trailing_zeros(x: int) -> int:
 
 
 def sign_extend(value: int, bits: int) -> int:
-    """Sign extend a value to 64 bits."""
     shift = 64 - bits
     return ((value << shift) >> shift) & 0xFFFFFFFFFFFFFFFF
 
 
 def decompress_float64(data: bytes, count: int) -> List[float]:
-    """Decompress float64 values using Gorilla compression."""
     if len(data) == 0 or count == 0:
         return []
     
     br = BitReader(data)
     result = []
     
-    # Read first value (64 bits)
     first_bits, ok = br.read_bits(64)
     if not ok:
         return result
@@ -139,25 +123,20 @@ def decompress_float64(data: bytes, count: int) -> List[float]:
         control_bit, ok = br.read_bits(1)
         if not ok:
             break
-        
+       
         if control_bit == 0:
-            # Same value as previous
             result.append(struct.unpack('d', struct.pack('Q', prev_value))[0])
         else:
-            # Different value
             block_type, ok = br.read_bits(1)
             if not ok:
                 break
-            
             if block_type == 0:
-                # Use previous leading/trailing
                 meaningful_bits = 64 - prev_leading - prev_trailing
                 bits, ok = br.read_bits(meaningful_bits)
                 if not ok:
                     break
                 xor = bits << prev_trailing
             else:
-                # New leading/trailing
                 leading, ok = br.read_bits(6)
                 if not ok:
                     break
@@ -181,14 +160,12 @@ def decompress_float64(data: bytes, count: int) -> List[float]:
 
 
 def decompress_int64(data: bytes, count: int) -> List[int]:
-    """Decompress int64 values using Gorilla compression (delta-of-delta encoding)."""
     if len(data) == 0 or count == 0:
         return []
     
     br = BitReader(data)
     result = []
     
-    # Read first value (64 bits)
     first_value, ok = br.read_bits(64)
     if not ok:
         return result
@@ -198,7 +175,6 @@ def decompress_int64(data: bytes, count: int) -> List[int]:
     if count == 1:
         return result
     
-    # Read first delta (64 bits)
     first_delta, ok = br.read_bits(64)
     if not ok:
         return result
@@ -224,7 +200,6 @@ def decompress_int64(data: bytes, count: int) -> List[int]:
                 break
             
             if second_bit == 0:
-                # 7 bits
                 bits, ok = br.read_bits(7)
                 if not ok:
                     break
@@ -235,7 +210,6 @@ def decompress_int64(data: bytes, count: int) -> List[int]:
                     break
                 
                 if third_bit == 0:
-                    # 9 bits
                     bits, ok = br.read_bits(9)
                     if not ok:
                         break
@@ -246,13 +220,11 @@ def decompress_int64(data: bytes, count: int) -> List[int]:
                         break
                     
                     if fourth_bit == 0:
-                        # 12 bits
                         bits, ok = br.read_bits(12)
                         if not ok:
                             break
                         delta_of_delta = sign_extend(bits, 12)
                     else:
-                        # 64 bits
                         bits, ok = br.read_bits(64)
                         if not ok:
                             break
@@ -269,7 +241,6 @@ def decompress_int64(data: bytes, count: int) -> List[int]:
 
 
 def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
-    """Read and decompress a .parq file, returning list of (timestamp, value) tuples."""
     with open(filepath, 'rb') as f:
         data = f.read()
     
@@ -293,7 +264,6 @@ def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
     print(f"Identifier: {identifier}")
     print()
     
-    # Read footer size (last 4 bytes)
     footer_size_offset = len(data) - 4
     footer_size = struct.unpack('<I', data[footer_size_offset:])[0]
     footer_start = footer_size_offset - footer_size
@@ -301,7 +271,6 @@ def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
     if footer_start < HEADER_SIZE:
         raise ValueError("Invalid footer size")
     
-    # Read footer
     footer = data[footer_start:footer_size_offset]
     metadata_version = struct.unpack('<I', footer[0:4])[0]
     footer_num_columns = struct.unpack('<I', footer[4:8])[0]
@@ -309,7 +278,6 @@ def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
     if footer_num_columns != 2:
         raise ValueError(f"Expected 2 columns, got {footer_num_columns}")
     
-    # Parse timestamp column metadata
     pos = 8
     timestamp_name_len = struct.unpack('<I', footer[pos:pos+4])[0]
     pos += 4
@@ -324,7 +292,6 @@ def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
     timestamp_count = struct.unpack('<Q', footer[pos:pos+8])[0]
     pos += 8
     
-    # Parse value column metadata
     value_name_len = struct.unpack('<I', footer[pos:pos+4])[0]
     pos += 4
     value_name = footer[pos:pos+value_name_len].decode('ascii', errors='ignore')
@@ -341,26 +308,20 @@ def read_parq_file(filepath: str) -> List[Tuple[int, float]]:
     print(f"Value Column: {value_name} (offset={value_offset}, size={value_size}, count={value_count})")
     print()
     
-    # Read and decompress timestamp column
-    # Skip the 8-byte header (compression type + size)
     timestamp_data_start = timestamp_offset + 8
     timestamp_compressed = data[timestamp_data_start:timestamp_data_start + timestamp_size - 8]
     timestamps = decompress_int64(timestamp_compressed, int(timestamp_count))
     
-    # Read and decompress value column
-    # Skip the 8-byte header (compression type + size)
     value_data_start = value_offset + 8
     value_compressed = data[value_data_start:value_data_start + value_size - 8]
     values = decompress_float64(value_compressed, int(value_count))
     
-    # Combine timestamps and values
     records = list(zip(timestamps, values))
     
     return records
 
 
 def format_timestamp(ts: int) -> str:
-    """Format Unix timestamp to readable date/time."""
     try:
         dt = datetime.fromtimestamp(ts)
         return dt.strftime('%Y-%m-%d %H:%M:%S')

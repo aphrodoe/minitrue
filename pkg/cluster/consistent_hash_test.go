@@ -6,47 +6,39 @@ import (
     "testing"
 )
 
-// TestConsistentHashRing_AddNode tests adding nodes to the ring
 func TestConsistentHashRing_AddNode(t *testing.T) {
     ring := NewConsistentHashRing(10)
     
-    // Add first node
     ring.AddNode("node-1")
     if ring.Size() != 1 {
         t.Errorf("Expected 1 node, got %d", ring.Size())
     }
     
-    // Add second node
     ring.AddNode("node-2")
     if ring.Size() != 2 {
         t.Errorf("Expected 2 nodes, got %d", ring.Size())
     }
-    
-    // Add third node
+
     ring.AddNode("node-3")
     if ring.Size() != 3 {
         t.Errorf("Expected 3 nodes, got %d", ring.Size())
     }
     
-    // Check virtual nodes created
-    expectedVirtualNodes := 3 * 10 // 3 nodes * 10 virtual nodes each
+    expectedVirtualNodes := 3 * 10
     if len(ring.sortedHashes) != expectedVirtualNodes {
         t.Errorf("Expected %d virtual nodes, got %d", 
                  expectedVirtualNodes, len(ring.sortedHashes))
     }
     
-    // Test adding duplicate node (should not increase count)
     ring.AddNode("node-1")
     if ring.Size() != 3 {
         t.Errorf("Adding duplicate node should not increase size, got %d", ring.Size())
     }
 }
 
-// TestConsistentHashRing_RemoveNode tests removing nodes from the ring
 func TestConsistentHashRing_RemoveNode(t *testing.T) {
     ring := NewConsistentHashRing(10)
     
-    // Add nodes
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
@@ -54,42 +46,37 @@ func TestConsistentHashRing_RemoveNode(t *testing.T) {
     initialSize := ring.Size()
     initialVirtualNodes := len(ring.sortedHashes)
     
-    // Remove node
     ring.RemoveNode("node-2")
     
     if ring.Size() != initialSize-1 {
         t.Errorf("Expected size %d after removal, got %d", initialSize-1, ring.Size())
     }
     
-    expectedVirtualNodes := initialVirtualNodes - 10 // Removed 10 virtual nodes
+    expectedVirtualNodes := initialVirtualNodes - 10 
     if len(ring.sortedHashes) != expectedVirtualNodes {
         t.Errorf("Expected %d virtual nodes after removal, got %d",
                  expectedVirtualNodes, len(ring.sortedHashes))
     }
     
-    // Test removing non-existent node (should not cause error)
+
     ring.RemoveNode("node-999")
     if ring.Size() != 2 {
         t.Errorf("Removing non-existent node should not change size, got %d", ring.Size())
     }
 }
 
-// TestConsistentHashRing_GetNode tests finding the node for a key
 func TestConsistentHashRing_GetNode(t *testing.T) {
     ring := NewConsistentHashRing(150)
     
-    // Test with no nodes
     _, err := ring.GetNode("test-key")
     if err == nil {
         t.Error("Expected error when ring is empty")
     }
     
-    // Add nodes
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
     
-    // Test that same key always maps to same node
     node1, err := ring.GetNode("device-001")
     if err != nil {
         t.Fatalf("GetNode failed: %v", err)
@@ -104,18 +91,15 @@ func TestConsistentHashRing_GetNode(t *testing.T) {
         t.Errorf("Same key should always map to same node: %s vs %s", node1, node2)
     }
     
-    // Test that different keys can map to different nodes
     node3, _ := ring.GetNode("device-002")
     node4, _ := ring.GetNode("device-003")
     
-    // At least one should be different (very high probability)
     allSame := (node1 == node3) && (node3 == node4)
     if allSame {
         t.Log("Warning: All test keys mapped to same node (unlikely but possible)")
     }
 }
 
-// TestConsistentHashRing_GetNodes tests getting multiple nodes for replication
 func TestConsistentHashRing_GetNodes(t *testing.T) {
     ring := NewConsistentHashRing(150)
     
@@ -123,7 +107,6 @@ func TestConsistentHashRing_GetNodes(t *testing.T) {
     ring.AddNode("node-2")
     ring.AddNode("node-3")
     
-    // Test getting 3 nodes
     nodes, err := ring.GetNodes("device-001", 3)
     if err != nil {
         t.Fatalf("GetNodes failed: %v", err)
@@ -133,7 +116,6 @@ func TestConsistentHashRing_GetNodes(t *testing.T) {
         t.Errorf("Expected 3 nodes, got %d", len(nodes))
     }
     
-    // Check all nodes are unique
     unique := make(map[string]bool)
     for _, node := range nodes {
         if unique[node] {
@@ -146,7 +128,6 @@ func TestConsistentHashRing_GetNodes(t *testing.T) {
         t.Errorf("Expected 3 unique nodes, got %d", len(unique))
     }
     
-    // Test requesting more nodes than available
     nodes, err = ring.GetNodes("device-001", 10)
     if err != nil {
         t.Fatalf("GetNodes failed: %v", err)
@@ -157,7 +138,6 @@ func TestConsistentHashRing_GetNodes(t *testing.T) {
     }
 }
 
-// TestConsistentHashRing_Distribution tests distribution quality
 func TestConsistentHashRing_Distribution(t *testing.T) {
     ring := NewConsistentHashRing(150)
     
@@ -165,7 +145,6 @@ func TestConsistentHashRing_Distribution(t *testing.T) {
     ring.AddNode("node-2")
     ring.AddNode("node-3")
     
-    // Test with 10,000 keys
     numKeys := 10000
     distribution := make(map[string]int)
     
@@ -178,9 +157,8 @@ func TestConsistentHashRing_Distribution(t *testing.T) {
         distribution[node]++
     }
     
-    // Each node should have roughly 1/3 of the keys
     expectedPerNode := numKeys / 3
-    tolerance := float64(expectedPerNode) * 0.2 // Allow 20% variance
+    tolerance := float64(expectedPerNode) * 0.2 
     
     t.Logf("Distribution of %d keys:", numKeys)
     for node, count := range distribution {
@@ -194,7 +172,6 @@ func TestConsistentHashRing_Distribution(t *testing.T) {
         }
     }
     
-    // Calculate standard deviation
     mean := float64(numKeys) / 3.0
     variance := 0.0
     for _, count := range distribution {
@@ -206,14 +183,12 @@ func TestConsistentHashRing_Distribution(t *testing.T) {
     
     t.Logf("Standard deviation: %.2f (lower is better)", stdDev)
     
-    // Standard deviation should be reasonably low
-    maxStdDev := float64(expectedPerNode) * 0.1 // 10% of expected
+    maxStdDev := float64(expectedPerNode) * 0.1
     if stdDev > maxStdDev {
         t.Errorf("Standard deviation too high: %.2f (max: %.2f)", stdDev, maxStdDev)
     }
 }
 
-// TestConsistentHashRing_Rebalancing tests data movement when nodes change
 func TestConsistentHashRing_Rebalancing(t *testing.T) {
     ring := NewConsistentHashRing(150)
     
@@ -221,7 +196,6 @@ func TestConsistentHashRing_Rebalancing(t *testing.T) {
     ring.AddNode("node-2")
     ring.AddNode("node-3")
     
-    // Track initial key placements
     numKeys := 1000
     initialPlacement := make(map[string]string)
     
@@ -231,10 +205,8 @@ func TestConsistentHashRing_Rebalancing(t *testing.T) {
         initialPlacement[key] = node
     }
     
-    // Remove a node
     ring.RemoveNode("node-2")
     
-    // Check how many keys moved
     moved := 0
     for key, oldNode := range initialPlacement {
         newNode, _ := ring.GetNode(key)
@@ -243,9 +215,8 @@ func TestConsistentHashRing_Rebalancing(t *testing.T) {
         }
     }
     
-    // With 3 nodes, removing 1 should move ~33% of keys
     expectedMoved := numKeys / 3
-    tolerance := float64(expectedMoved) * 0.3 // Allow 30% variance
+    tolerance := float64(expectedMoved) * 0.3 
     
     t.Logf("Keys moved after removing node-2: %d out of %d (%.2f%%)",
            moved, numKeys, float64(moved)/float64(numKeys)*100)
@@ -256,10 +227,8 @@ func TestConsistentHashRing_Rebalancing(t *testing.T) {
                  moved, expectedMoved, tolerance)
     }
     
-    // Add the node back
     ring.AddNode("node-2")
     
-    // Most keys should return to original placement
     returned := 0
     for key, originalNode := range initialPlacement {
         currentNode, _ := ring.GetNode(key)
@@ -271,14 +240,12 @@ func TestConsistentHashRing_Rebalancing(t *testing.T) {
     t.Logf("Keys returned to original placement: %d out of %d (%.2f%%)",
            returned, numKeys, float64(returned)/float64(numKeys)*100)
     
-    // Most keys should return (allowing some variance due to hash collisions)
-    if returned < numKeys*8/10 { // At least 80%
+    if returned < numKeys*8/10 { 
         t.Errorf("Too few keys returned to original placement: %d (expected > %d)",
                  returned, numKeys*8/10)
     }
 }
 
-// TestConsistentHashRing_VirtualNodes tests virtual nodes configuration
 func TestConsistentHashRing_VirtualNodes(t *testing.T) {
     testCases := []struct {
         virtualNodes int
@@ -288,8 +255,8 @@ func TestConsistentHashRing_VirtualNodes(t *testing.T) {
         {10, 10},
         {50, 50},
         {150, 150},
-        {0, 150},   // Should use default
-        {-5, 150},  // Should use default
+        {0, 150},   
+        {-5, 150},  
     }
     
     for _, tc := range testCases {
@@ -305,17 +272,14 @@ func TestConsistentHashRing_VirtualNodes(t *testing.T) {
     }
 }
 
-// TestConsistentHashRing_GetAllNodes tests retrieving all nodes
 func TestConsistentHashRing_GetAllNodes(t *testing.T) {
     ring := NewConsistentHashRing(10)
     
-    // Empty ring
     nodes := ring.GetAllNodes()
     if len(nodes) != 0 {
         t.Errorf("Expected 0 nodes in empty ring, got %d", len(nodes))
     }
     
-    // Add nodes
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
@@ -325,7 +289,6 @@ func TestConsistentHashRing_GetAllNodes(t *testing.T) {
         t.Errorf("Expected 3 nodes, got %d", len(nodes))
     }
     
-    // Check all expected nodes are present
     expectedNodes := map[string]bool{
         "node-1": true,
         "node-2": true,
@@ -344,19 +307,15 @@ func TestConsistentHashRing_GetAllNodes(t *testing.T) {
     }
 }
 
-// TestConsistentHashRing_Concurrent tests thread safety
 func TestConsistentHashRing_Concurrent(t *testing.T) {
     ring := NewConsistentHashRing(150)
     
-    // Pre-populate with some nodes
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
     
-    // Run concurrent operations
     done := make(chan bool, 3)
     
-    // Goroutine 1: Keep adding and removing nodes
     go func() {
         for i := 0; i < 100; i++ {
             ring.AddNode(fmt.Sprintf("temp-node-%d", i))
@@ -365,7 +324,6 @@ func TestConsistentHashRing_Concurrent(t *testing.T) {
         done <- true
     }()
     
-    // Goroutine 2: Keep querying
     go func() {
         for i := 0; i < 1000; i++ {
             ring.GetNode(fmt.Sprintf("device-%d", i))
@@ -373,7 +331,6 @@ func TestConsistentHashRing_Concurrent(t *testing.T) {
         done <- true
     }()
     
-    // Goroutine 3: Keep getting multiple nodes
     go func() {
         for i := 0; i < 1000; i++ {
             ring.GetNodes(fmt.Sprintf("device-%d", i), 3)
@@ -381,16 +338,13 @@ func TestConsistentHashRing_Concurrent(t *testing.T) {
         done <- true
     }()
     
-    // Wait for all goroutines
     <-done
     <-done
     <-done
     
-    // If we reach here without deadlock or panic, test passes
     t.Log("Concurrent operations completed successfully")
 }
 
-// TestConsistentHashRing_EdgeCases tests edge cases
 func TestConsistentHashRing_EdgeCases(t *testing.T) {
     t.Run("Empty ring GetNode", func(t *testing.T) {
         ring := NewConsistentHashRing(10)
@@ -434,8 +388,6 @@ func TestConsistentHashRing_EdgeCases(t *testing.T) {
         }
     })
 }
-
-// BenchmarkConsistentHashRing_AddNode benchmarks adding nodes
 func BenchmarkConsistentHashRing_AddNode(b *testing.B) {
     ring := NewConsistentHashRing(150)
     
@@ -445,11 +397,9 @@ func BenchmarkConsistentHashRing_AddNode(b *testing.B) {
     }
 }
 
-// BenchmarkConsistentHashRing_GetNode benchmarks finding a node
 func BenchmarkConsistentHashRing_GetNode(b *testing.B) {
     ring := NewConsistentHashRing(150)
-    
-    // Pre-populate
+
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
@@ -460,11 +410,9 @@ func BenchmarkConsistentHashRing_GetNode(b *testing.B) {
     }
 }
 
-// BenchmarkConsistentHashRing_GetNodes benchmarks getting multiple nodes
 func BenchmarkConsistentHashRing_GetNodes(b *testing.B) {
     ring := NewConsistentHashRing(150)
     
-    // Pre-populate
     ring.AddNode("node-1")
     ring.AddNode("node-2")
     ring.AddNode("node-3")
@@ -475,11 +423,9 @@ func BenchmarkConsistentHashRing_GetNodes(b *testing.B) {
     }
 }
 
-// BenchmarkConsistentHashRing_RemoveNode benchmarks removing nodes
 func BenchmarkConsistentHashRing_RemoveNode(b *testing.B) {
     ring := NewConsistentHashRing(150)
     
-    // Pre-populate with many nodes
     for i := 0; i < 1000; i++ {
         ring.AddNode(fmt.Sprintf("node-%d", i))
     }

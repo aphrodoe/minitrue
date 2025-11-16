@@ -1,6 +1,3 @@
-//go:build !no_serial
-// +build !no_serial
-
 package main
 
 import (

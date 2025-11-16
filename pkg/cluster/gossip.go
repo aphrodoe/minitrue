@@ -12,7 +12,6 @@ import (
     "github.com/minitrue/pkg/network"
 )
 
-// GossipProtocol implements the gossip protocol for cluster membership
 type GossipProtocol struct {
     localNode      *models.NodeInfo
     clusterState   *models.ClusterState
@@ -24,7 +23,6 @@ type GossipProtocol struct {
     stopChan       chan struct{}
 }
 
-// NewGossipProtocol creates a new gossip protocol instance
 func NewGossipProtocol(localNode *models.NodeInfo, interval time.Duration, 
                        client *network.Client, replicationFactor int) *GossipProtocol {
     return &GossipProtocol{
@@ -41,9 +39,7 @@ func NewGossipProtocol(localNode *models.NodeInfo, interval time.Duration,
     }
 }
 
-// Start begins the gossip protocol
 func (gp *GossipProtocol) Start() {
-    // Add self to cluster state
     gp.mu.Lock()
     gp.localNode.LastHeartbeat = time.Now()
     gp.localNode.Status = "active"
@@ -56,7 +52,6 @@ func (gp *GossipProtocol) Start() {
     go gp.failureDetectionLoop()
 }
 
-// Stop stops the gossip protocol
 func (gp *GossipProtocol) Stop() {
     if gp.ticker != nil {
         gp.ticker.Stop()
@@ -64,7 +59,6 @@ func (gp *GossipProtocol) Stop() {
     close(gp.stopChan)
 }
 
-// gossipLoop periodically sends gossip messages to random nodes
 func (gp *GossipProtocol) gossipLoop() {
     for {
         select {
@@ -76,14 +70,11 @@ func (gp *GossipProtocol) gossipLoop() {
     }
 }
 
-// sendGossip sends the cluster state to random nodes
 func (gp *GossipProtocol) sendGossip() {
     gp.mu.Lock()
-    // Update local node's heartbeat
     gp.localNode.LastHeartbeat = time.Now()
     gp.clusterState.Version++
-    
-    // Create gossip message
+
     msg := models.GossipMessage{
         State:   *gp.clusterState,
         From:    gp.localNode.ID,
@@ -98,7 +89,6 @@ func (gp *GossipProtocol) sendGossip() {
     }
 }
 
-// sendGossipToNode sends gossip message to a specific node
 func (gp *GossipProtocol) sendGossipToNode(nodeID string, msg models.GossipMessage) {
     gp.mu.RLock()
     node, exists := gp.clusterState.Nodes[nodeID]
@@ -126,17 +116,14 @@ func (gp *GossipProtocol) sendGossipToNode(nodeID string, msg models.GossipMessa
     }
 }
 
-// HandleGossipMessage processes incoming gossip messages
 func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
     gp.mu.Lock()
     defer gp.mu.Unlock()
 
-    // Merge the received state with local state
     for nodeID, remoteNode := range msg.State.Nodes {
         localNode, exists := gp.clusterState.Nodes[nodeID]
 
         if !exists {
-            // New node discovered
             gp.clusterState.Nodes[nodeID] = &models.NodeInfo{
                 ID:            remoteNode.ID,
                 Address:       remoteNode.Address,
@@ -155,13 +142,11 @@ func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
         }
     }
 
-    // Update version if received state is newer
     if msg.Version > gp.clusterState.Version {
         gp.clusterState.Version = msg.Version
     }
 }
 
-// selectRandomActiveNodes selects N random ACTIVE nodes from the cluster
 func (gp *GossipProtocol) selectRandomActiveNodes(count int) []string {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
@@ -177,7 +162,6 @@ func (gp *GossipProtocol) selectRandomActiveNodes(count int) []string {
         return nodes
     }
 
-    // Shuffle and select first N
     rand.Shuffle(len(nodes), func(i, j int) {
         nodes[i], nodes[j] = nodes[j], nodes[i]
     })
@@ -185,7 +169,6 @@ func (gp *GossipProtocol) selectRandomActiveNodes(count int) []string {
     return nodes[:count]
 }
 
-// failureDetectionLoop periodically checks for failed nodes
 func (gp *GossipProtocol) failureDetectionLoop() {
     ticker := time.NewTicker(gp.interval)
     defer ticker.Stop()
@@ -200,7 +183,6 @@ func (gp *GossipProtocol) failureDetectionLoop() {
     }
 }
 
-// detectFailures marks nodes as suspect or down based on heartbeat timeout
 func (gp *GossipProtocol) detectFailures() {
     gp.mu.Lock()
     defer gp.mu.Unlock()
@@ -229,7 +211,6 @@ func (gp *GossipProtocol) detectFailures() {
     }
 }
 
-// markNodeSuspect marks a node as suspect
 func (gp *GossipProtocol) markNodeSuspect(nodeID string) {
     gp.mu.Lock()
     defer gp.mu.Unlock()
@@ -243,12 +224,10 @@ func (gp *GossipProtocol) markNodeSuspect(nodeID string) {
     }
 }
 
-// GetClusterState returns a copy of the current cluster state
 func (gp *GossipProtocol) GetClusterState() models.ClusterState {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
 
-    // Create a deep copy
     stateCopy := models.ClusterState{
         Nodes:             make(map[string]*models.NodeInfo),
         ReplicationFactor: gp.clusterState.ReplicationFactor,
@@ -263,7 +242,6 @@ func (gp *GossipProtocol) GetClusterState() models.ClusterState {
     return stateCopy
 }
 
-// GetActiveNodes returns all active nodes
 func (gp *GossipProtocol) GetActiveNodes() []*models.NodeInfo {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
@@ -278,9 +256,7 @@ func (gp *GossipProtocol) GetActiveNodes() []*models.NodeInfo {
     return activeNodes
 }
 
-// AddSeedNode adds a seed node to bootstrap the cluster
 func (gp *GossipProtocol) AddSeedNode(address string) error {
-    // Create a temporary gossip message with our info
     gp.mu.RLock()
     seedMsg := models.GossipMessage{
         State: models.ClusterState{
@@ -309,14 +285,12 @@ func (gp *GossipProtocol) AddSeedNode(address string) error {
     return gp.client.Send(address, data)
 }
 
-// GetNodeCount returns the number of nodes in the cluster
 func (gp *GossipProtocol) GetNodeCount() int {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
     return len(gp.clusterState.Nodes)
 }
 
-// IsNodeActive checks if a specific node is active
 func (gp *GossipProtocol) IsNodeActive(nodeID string) bool {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
@@ -327,7 +301,6 @@ func (gp *GossipProtocol) IsNodeActive(nodeID string) bool {
     return false
 }
 
-// GetNodeInfo returns node information for a given node ID
 func (gp *GossipProtocol) GetNodeInfo(nodeID string) (*models.NodeInfo, bool) {
     gp.mu.RLock()
     defer gp.mu.RUnlock()
@@ -337,12 +310,10 @@ func (gp *GossipProtocol) GetNodeInfo(nodeID string) (*models.NodeInfo, bool) {
         return nil, false
     }
     
-    // Return a copy
     nodeCopy := *node
     return &nodeCopy, true
 }
 
-// GetNodeByID returns node info by ID (for getting HTTP port)
 func (gp *GossipProtocol) GetNodeByID(nodeID string) *models.NodeInfo {
     gp.mu.RLock()
     defer gp.mu.RUnlock()

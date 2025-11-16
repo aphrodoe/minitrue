@@ -10,7 +10,7 @@ function App() {
   const [queryResult, setQueryResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('query'); // 'query' or 'realtime'
+  const [activeTab, setActiveTab] = useState('query'); 
 
   const handleQuery = async (queryData) => {
     setLoading(true);
