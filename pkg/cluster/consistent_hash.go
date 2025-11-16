@@ -7,19 +7,17 @@ import (
     "sync"
 )
 
-// ConsistentHashRing implements consistent hashing with virtual nodes
 type ConsistentHashRing struct {
-    ring         map[uint32]string // hash -> nodeID
-    sortedHashes []uint32           // sorted list of all hash positions
-    virtualNodes int                // number of virtual nodes per physical node
-    nodes        map[string]bool    // set of all physical nodes
-    mu           sync.RWMutex       // read-write lock for thread safety
+    ring         map[uint32]string
+    sortedHashes []uint32
+    virtualNodes int
+    nodes        map[string]bool
+    mu           sync.RWMutex
 }
 
-// NewConsistentHashRing creates a new consistent hash ring
 func NewConsistentHashRing(virtualNodes int) *ConsistentHashRing {
     if virtualNodes <= 0 {
-        virtualNodes = 150 // Default value
+        virtualNodes = 150
     }
     
     return &ConsistentHashRing{
@@ -30,18 +28,16 @@ func NewConsistentHashRing(virtualNodes int) *ConsistentHashRing {
     }
 }
 
-// AddNode adds a node to the ring
 func (chr *ConsistentHashRing) AddNode(nodeID string) {
     chr.mu.Lock()
     defer chr.mu.Unlock()
 
     if chr.nodes[nodeID] {
-        return // Already exists
+        return
     }
 
     chr.nodes[nodeID] = true
 
-    // Add virtual nodes
     for i := 0; i < chr.virtualNodes; i++ {
         virtualKey := fmt.Sprintf("%s#%d", nodeID, i)
         hash := chr.hashKey(virtualKey)
@@ -49,24 +45,21 @@ func (chr *ConsistentHashRing) AddNode(nodeID string) {
         chr.sortedHashes = append(chr.sortedHashes, hash)
     }
 
-    // Sort hashes
     sort.Slice(chr.sortedHashes, func(i, j int) bool {
         return chr.sortedHashes[i] < chr.sortedHashes[j]
     })
 }
 
-// RemoveNode removes a node from the ring
 func (chr *ConsistentHashRing) RemoveNode(nodeID string) {
     chr.mu.Lock()
     defer chr.mu.Unlock()
 
     if !chr.nodes[nodeID] {
-        return // Doesn't exist
+        return
     }
 
     delete(chr.nodes, nodeID)
 
-    // Remove virtual nodes
     newHashes := make([]uint32, 0)
     for _, hash := range chr.sortedHashes {
         if chr.ring[hash] != nodeID {
@@ -79,7 +72,6 @@ func (chr *ConsistentHashRing) RemoveNode(nodeID string) {
     chr.sortedHashes = newHashes
 }
 
-// GetNode returns the node responsible for a key
 func (chr *ConsistentHashRing) GetNode(key string) (string, error) {
     chr.mu.RLock()
     defer chr.mu.RUnlock()
@@ -90,12 +82,10 @@ func (chr *ConsistentHashRing) GetNode(key string) (string, error) {
 
     hash := chr.hashKey(key)
 
-    // Binary search for the first node with hash >= key hash
     idx := sort.Search(len(chr.sortedHashes), func(i int) bool {
         return chr.sortedHashes[i] >= hash
     })
 
-    // Wrap around if necessary
     if idx == len(chr.sortedHashes) {
         idx = 0
     }
@@ -103,7 +93,6 @@ func (chr *ConsistentHashRing) GetNode(key string) (string, error) {
     return chr.ring[chr.sortedHashes[idx]], nil
 }
 
-// GetNodes returns N nodes responsible for a key (for replication)
 func (chr *ConsistentHashRing) GetNodes(key string, count int) ([]string, error) {
     chr.mu.RLock()
     defer chr.mu.RUnlock()
@@ -118,7 +107,6 @@ func (chr *ConsistentHashRing) GetNodes(key string, count int) ([]string, error)
 
     hash := chr.hashKey(key)
 
-    // Find starting position
     idx := sort.Search(len(chr.sortedHashes), func(i int) bool {
         return chr.sortedHashes[i] >= hash
     })
@@ -127,7 +115,6 @@ func (chr *ConsistentHashRing) GetNodes(key string, count int) ([]string, error)
         idx = 0
     }
 
-    // Collect unique nodes
     nodesMap := make(map[string]bool)
     nodes := make([]string, 0, count)
 
@@ -143,7 +130,6 @@ func (chr *ConsistentHashRing) GetNodes(key string, count int) ([]string, error)
     return nodes, nil
 }
 
-// GetAllNodes returns all nodes in the ring
 func (chr *ConsistentHashRing) GetAllNodes() []string {
     chr.mu.RLock()
     defer chr.mu.RUnlock()
@@ -156,12 +142,10 @@ func (chr *ConsistentHashRing) GetAllNodes() []string {
     return nodes
 }
 
-// hashKey computes the hash of a key
 func (chr *ConsistentHashRing) hashKey(key string) uint32 {
     return crc32.ChecksumIEEE([]byte(key))
 }
 
-// Size returns the number of nodes in the ring
 func (chr *ConsistentHashRing) Size() int {
     chr.mu.RLock()
     defer chr.mu.RUnlock()

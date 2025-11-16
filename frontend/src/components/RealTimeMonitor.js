@@ -3,20 +3,16 @@ import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import './RealTimeMonitor.css';
 
 const RealTimeMonitor = () => {
-  // Helper function to format device ID aesthetically
   const formatDeviceId = (deviceId) => {
     if (!deviceId) return '';
-    // Convert "sensor_1" to "Sensor 1", "sensor_2" to "Sensor 2", etc.
     return deviceId
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   };
 
-  // Helper function to format metric name aesthetically
   const formatMetricName = (metricName) => {
     if (!metricName) return '';
-    // Convert "temperature" to "Temperature"
     return metricName.charAt(0).toUpperCase() + metricName.slice(1);
   };
 
@@ -67,7 +63,7 @@ const RealTimeMonitor = () => {
         const newDataPoints = lines.map(line => JSON.parse(line));
         
         setDataPoints(prev => {
-          const updated = [...newDataPoints, ...prev].slice(0, 100); 
+          const updated = [...newDataPoints, ...prev].slice(0, 100);
           return updated;
         });
 
@@ -101,7 +97,6 @@ const RealTimeMonitor = () => {
       setIsConnected(false);
       
       reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('Attempting to reconnect...');
         connectWebSocket();
       }, 3000);
     };
@@ -309,20 +304,17 @@ const RealTimeMonitor = () => {
 
   }, [showGraph, graphDataPoints, canvasSize, selectedSensor]);
 
-  // Initialize and update canvas size
   useEffect(() => {
     if (canvasRef.current && showGraph) {
       const canvas = canvasRef.current;
       const container = canvas.parentElement;
       if (container) {
-        // Set canvas size (accounting for padding)
-        const containerWidth = container.clientWidth - 40; // padding
+        const containerWidth = container.clientWidth - 40;
         const width = containerWidth > 0 ? containerWidth : 800;
         canvas.width = width;
         canvas.height = 400;
         setCanvasSize({ width, height: 400 });
       } else {
-        // Fallback size
         canvas.width = 800;
         canvas.height = 400;
         setCanvasSize({ width: 800, height: 400 });
@@ -330,7 +322,6 @@ const RealTimeMonitor = () => {
     }
   }, [showGraph]);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       if (canvasRef.current && showGraph) {
