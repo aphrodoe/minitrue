@@ -2,24 +2,16 @@ import React, { useState } from 'react';
 import './App.css';
 import QueryForm from './components/QueryForm';
 import QueryResults from './components/QueryResults';
+import RealTimeMonitor from './components/RealTimeMonitor';
 
 function App() {
-  const [queryResult, setQueryResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleQuery = async (queryData) => {
-    setLoading(true);
-    setError(null);
-    setQueryResult(queryData);
-    setLoading(false);
-  };
-
+  const [activeTab, setActiveTab] = useState('query');
   return (
     <div className="App">
-      <QueryForm onSubmit={handleQuery} loading={loading} />
-      {error && <div className="error-message"><strong>Error:</strong> {error}</div>}
-      {queryResult && <QueryResults result={queryResult} />}
+      <button onClick={() => setActiveTab('query')}>Query Data</button>
+      <button onClick={() => setActiveTab('realtime')}>Real-Time Monitor</button>
+      {activeTab === 'query' ? <QueryForm onSubmit={() => {}} loading={false} /> : <RealTimeMonitor />}
+      <QueryResults result={null} />
     </div>
   );
 }
