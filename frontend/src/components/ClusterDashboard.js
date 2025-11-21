@@ -35,7 +35,9 @@ const ClusterDashboard = () => {
     return <div className="cluster-dashboard error">{error}</div>;
   }
 
-  const nodes = clusterState?.nodes ? Object.values(clusterState.nodes) : [];
+  const nodes = clusterState?.nodes 
+    ? Object.values(clusterState.nodes).filter(n => !n.id.startsWith('router')) 
+    : [];
 
   return (
     <div className="cluster-dashboard">
@@ -53,7 +55,7 @@ const ClusterDashboard = () => {
           <div className="no-nodes">No nodes actively participating in the cluster.</div>
         ) : (
           nodes.map((node) => {
-            const isAlive = node.status === 'alive';
+            const isAlive = node.status === 'active';
             const statusClass = isAlive ? 'status-alive' : 'status-dead';
             
             return (
@@ -63,14 +65,6 @@ const ClusterDashboard = () => {
                   <span className={`status-indicator ${statusClass}`}></span>
                 </div>
                 <div className="node-body">
-                  <div className="info-row">
-                    <span className="label">Address:</span>
-                    <span className="value">{node.address}</span>
-                  </div>
-                  <div className="info-row">
-                    <span className="label">HTTP Port:</span>
-                    <span className="value">{node.http_port}</span>
-                  </div>
                   <div className="info-row">
                     <span className="label">Status:</span>
                     <span className={`value ${statusClass}`}>{node.status.toUpperCase()}</span>

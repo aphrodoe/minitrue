@@ -1,12 +1,6 @@
 .cluster-dashboard {
-  background: rgba(10, 15, 30, 0.6);
-  border: 1px solid rgba(0, 242, 254, 0.2);
-  border-radius: 12px;
-  padding: 30px;
-  margin-top: 20px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  width: 100%;
+  padding: 20px 0;
   color: #fff;
 }
 
@@ -14,17 +8,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
 .dashboard-header h2 {
-  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.8rem;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0;
 }
 
 .cluster-meta {
@@ -48,26 +40,30 @@
 }
 
 .node-card {
-  background: rgba(15, 23, 42, 0.7);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
   padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-left: 4px solid #555;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s;
   position: relative;
   overflow: hidden;
 }
 
 .node-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 .node-card.status-alive {
-  border-left-color: #00f2fe;
+  border-left-color: #4CAF50;
 }
 
 .node-card.status-dead {
-  border-left-color: #ff4757;
+  border-left-color: #F44336;
 }
 
 .node-header {
@@ -91,20 +87,20 @@
 }
 
 .status-indicator.status-alive {
-  background-color: #00f2fe;
-  box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+  background-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
   animation: pulse-alive 2s infinite;
 }
 
 .status-indicator.status-dead {
-  background-color: #ff4757;
-  box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+  background-color: #F44336;
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.6);
 }
 
 @keyframes pulse-alive {
-  0% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0.4); }
-  70% { box-shadow: 0 0 0 6px rgba(0, 242, 254, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 242, 254, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
 }
 
 .node-body {
@@ -129,11 +125,11 @@
 }
 
 .info-row .value.status-alive {
-  color: #00f2fe;
+  color: #4CAF50;
 }
 
 .info-row .value.status-dead {
-  color: #ff4757;
+  color: #F44336;
 }
 
 .loading, .error, .no-nodes {
@@ -144,5 +140,5 @@
 }
 
 .error {
-  color: #ff4757;
+  color: #F44336;
 }
