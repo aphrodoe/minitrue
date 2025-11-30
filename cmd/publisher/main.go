@@ -10,11 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/minitrue/internal/logger"
 	"github.com/minitrue/internal/mqttclient"
 	"github.com/tarm/serial"
 )
 
 func main() {
+	logger.SetupBeautifulLogging()
 
 	port := flag.String("port", "/dev/tty.usbmodem14101", "serial port for arduino")
 	baud := flag.Int("baud", 9600, "serial baud rate")
