@@ -15,6 +15,7 @@ import (
 
 	"github.com/minitrue/internal/cluster"
 	"github.com/minitrue/internal/ingestion"
+	"github.com/minitrue/internal/logger"
 	"github.com/minitrue/internal/models"
 	"github.com/minitrue/internal/mqttclient"
 	"github.com/minitrue/internal/query"
@@ -34,7 +35,9 @@ var defaultNodeSlots = []nodeSlot{
 }
 
 func main() {
-	mode := flag.String("mode", "ingestion", "mode: ingestion | query | all")
+	logger.SetupBeautifulLogging()
+
+	mode := flag.String("mode", "ingestion", "mode: ingestion | query (HTTP plus read-only MQTT for /ws) | all")
 	nodeID := flag.String("node_id", "", "node identifier (leave empty to auto-assign a local cluster slot)")
 	port := flag.Int("port", 0, "HTTP port for query server (0 = auto-assign based on node ID)")
 	tcpPort := flag.Int("tcp_port", 0, "TCP port for internode communication (0 = auto-assign based on node ID)")
@@ -129,9 +132,12 @@ func main() {
 		ing.Start()
 		log.Printf("[%s] Ingestion service started", resolvedNodeID)
 	case "query":
+		// Query mode serves HTTP queries and subscribes to MQTT only to bridge
+		// live messages to /ws. It does not start ingestion and must not persist
+		// primary or replica records.
 		q := query.NewWithRestart(mqttc, store, resolvedNodeID, restartFn)
 		go q.StartHTTP(actualHTTPPort)
-		log.Printf("[%s] Query HTTP server running on :%d", resolvedNodeID, actualHTTPPort)
+		log.Printf("[%s] Query HTTP server running on :%d (read-only MQTT bridge for /ws enabled)", resolvedNodeID, actualHTTPPort)
 	case "all":
 		ing := ingestion.New(mqttc, store, resolvedNodeID)
 		ing.Start()
