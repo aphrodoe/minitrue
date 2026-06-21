@@ -1,0 +1,71 @@
+services:
+  # 1. Polaris Node (Web Service)
+  - type: web
+    name: polaris
+    env: go
+    plan: free
+    buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
+    startCommand: ./bin/minitrue-server
+    envVars:
+      - key: MINITRUE_NODE_ID
+        value: polaris
+      - key: MINITRUE_MODE
+        value: all
+      - key: MINITRUE_BROKER
+        value: tcp://broker.emqx.io:1883
+      - key: MINITRUE_TCP_PORT
+        value: "9000"
+      - key: MINITRUE_ADDRESS
+        value: polaris:9000
+      - key: MINITRUE_SEEDS
+        value: polaris:9000,sirius:9001,vega:9002
+
+  # 2. Sirius Node (Web Service)
+  - type: web
+    name: sirius
+    env: go
+    plan: free
+    buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
+    startCommand: ./bin/minitrue-server
+    envVars:
+      - key: MINITRUE_NODE_ID
+        value: sirius
+      - key: MINITRUE_MODE
+        value: all
+      - key: MINITRUE_BROKER
+        value: tcp://broker.emqx.io:1883
+      - key: MINITRUE_TCP_PORT
+        value: "9001"
+      - key: MINITRUE_ADDRESS
+        value: sirius:9001
+      - key: MINITRUE_SEEDS
+        value: polaris:9000,sirius:9001,vega:9002
+
+  # 3. Vega Node (Web Service)
+  - type: web
+    name: vega
+    env: go
+    plan: free
+    buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
+    startCommand: ./bin/minitrue-server
+    envVars:
+      - key: MINITRUE_NODE_ID
+        value: vega
+      - key: MINITRUE_MODE
+        value: all
+      - key: MINITRUE_BROKER
+        value: tcp://broker.emqx.io:1883
+      - key: MINITRUE_TCP_PORT
+        value: "9002"
+      - key: MINITRUE_ADDRESS
+        value: vega:9002
+      - key: MINITRUE_SEEDS
+        value: polaris:9000,sirius:9001,vega:9002
+
+  # 4. Publisher / Simulator (Web Service to pass Render health checks)
+  - type: web
+    name: publisher
+    env: go
+    plan: free
+    buildCommand: go build -o bin/publisher cmd/publisher/main.go
+    startCommand: ./bin/publisher --sim=true --broker=tcp://broker.emqx.io:1883

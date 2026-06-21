@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -23,6 +25,21 @@ func main() {
 	broker := flag.String("broker", "tcp://localhost:1883", "mqtt broker")
 	sim := flag.Bool("sim", true, "simulate sensors instead of reading serial")
 	flag.Parse()
+
+	// Start dummy HTTP server to satisfy Render's web service health checks
+	portEnv := os.Getenv("PORT")
+	if portEnv == "" {
+		portEnv = "8080"
+	}
+	go func() {
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("Publisher is running"))
+		})
+		log.Printf("Starting dummy HTTP server for health checks on port %s", portEnv)
+		if err := http.ListenAndServe(":"+portEnv, nil); err != nil {
+			log.Printf("HTTP server error: %v", err)
+		}
+	}()
 
 	mqttc, err := mqttclient.New(mqttclient.Options{
 		BrokerURL: *broker,

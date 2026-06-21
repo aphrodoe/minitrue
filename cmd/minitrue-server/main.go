@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -34,16 +35,36 @@ var defaultNodeSlots = []nodeSlot{
 	{ID: "vega", HTTPPort: 8082, TCPPort: 9002},
 }
 
+func getEnvStr(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func getEnvInt(key string, fallback int) int {
+	if valueStr, ok := os.LookupEnv(key); ok {
+		if value, err := strconv.Atoi(valueStr); err == nil {
+			return value
+		}
+	}
+	return fallback
+}
+
 func main() {
 	logger.SetupBeautifulLogging()
 
-	mode := flag.String("mode", "ingestion", "mode: ingestion | query (HTTP plus read-only MQTT for /ws) | all")
-	nodeID := flag.String("node_id", "", "node identifier (leave empty to auto-assign a local cluster slot)")
-	port := flag.Int("port", 0, "HTTP port for query server (0 = auto-assign based on node ID)")
-	tcpPort := flag.Int("tcp_port", 0, "TCP port for internode communication (0 = auto-assign based on node ID)")
-	broker := flag.String("broker", "tcp://localhost:1883", "MQTT broker URL")
-	dataDir := flag.String("data_dir", "data", "directory for storing data files")
-	seedNodes := flag.String("seeds", "", "comma-separated list of peer node addresses (leave empty for symmetric local peer discovery)")
+	mode := flag.String("mode", getEnvStr("MINITRUE_MODE", "ingestion"), "mode: ingestion | query (HTTP plus read-only MQTT for /ws) | all")
+	nodeID := flag.String("node_id", getEnvStr("MINITRUE_NODE_ID", ""), "node identifier (leave empty to auto-assign a local cluster slot)")
+	
+	defaultPort := getEnvInt("PORT", getEnvInt("MINITRUE_PORT", 0))
+	port := flag.Int("port", defaultPort, "HTTP port for query server (0 = auto-assign based on node ID)")
+	
+	tcpPort := flag.Int("tcp_port", getEnvInt("MINITRUE_TCP_PORT", 0), "TCP port for internode communication (0 = auto-assign based on node ID)")
+	broker := flag.String("broker", getEnvStr("MINITRUE_BROKER", "tcp://localhost:1883"), "MQTT broker URL")
+	dataDir := flag.String("data_dir", getEnvStr("MINITRUE_DATA_DIR", "data"), "directory for storing data files")
+	seedNodes := flag.String("seeds", getEnvStr("MINITRUE_SEEDS", ""), "comma-separated list of peer node addresses (leave empty for symmetric local peer discovery)")
+	address := flag.String("address", getEnvStr("MINITRUE_ADDRESS", ""), "advertised TCP address for gossip (default: localhost:tcp_port)")
 	flag.Parse()
 
 	originalArgs := os.Args
@@ -100,9 +121,14 @@ func main() {
 	store := storage.NewUnifiedStorage(storageFile)
 	defer store.Close()
 
+	advertisedAddr := *address
+	if advertisedAddr == "" {
+		advertisedAddr = fmt.Sprintf("localhost:%d", actualTCPPort)
+	}
+
 	localNode := &models.NodeInfo{
 		ID:       resolvedNodeID,
-		Address:  fmt.Sprintf("localhost:%d", actualTCPPort),
+		Address:  advertisedAddr,
 		HTTPPort: actualHTTPPort,
 		MQTTPort: 1883,
 		Status:   "active",

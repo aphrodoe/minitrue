@@ -80,6 +80,16 @@ func (gp *GossipProtocol) sendGossip() {
 
     msg := models.GossipMessage{
         State: models.ClusterState{
+            Nodes: map[string]*models.NodeInfo{
+                gp.localNode.ID: {
+                    ID:            gp.localNode.ID,
+                    Address:       gp.localNode.Address,
+                    HTTPPort:      gp.localNode.HTTPPort,
+                    MQTTPort:      gp.localNode.MQTTPort,
+                    LastHeartbeat: gp.localNode.LastHeartbeat,
+                    Status:        gp.localNode.Status,
+                },
+            },
             ReplicationFactor: gp.clusterState.ReplicationFactor,
             Version:           gp.clusterState.Version,
         },
@@ -125,17 +135,8 @@ func (gp *GossipProtocol) sendGossipToNode(nodeID string, msg models.GossipMessa
 }
 
 func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
-    gp.mu.Lock()
-    defer gp.mu.Unlock()
-
-    if !msg.IsFull {
-        localTree := BuildMerkleTree(gp.clusterState.Nodes)
-        if localTree.GetRootHash() != msg.RootHash {
-            // Mismatch detected, request full sync
-            go gp.requestFullSync(msg.From)
-        }
-        return
-    }
+	gp.mu.Lock()
+	defer gp.mu.Unlock()
 
     for nodeID, remoteNode := range msg.State.Nodes {
         localNode, exists := gp.clusterState.Nodes[nodeID]
@@ -157,6 +158,23 @@ func (gp *GossipProtocol) HandleGossipMessage(msg models.GossipMessage) {
             localNode.Status = remoteNode.Status
             localNode.Address = remoteNode.Address
         }
+    }
+
+	if senderNode, exists := gp.clusterState.Nodes[msg.From]; exists {
+		senderNode.LastHeartbeat = time.Now()
+		if senderNode.Status != "active" {
+			log.Printf("[%s] Node %s recovered via direct message", gp.localNode.ID, msg.From)
+			senderNode.Status = "active"
+		}
+	}
+
+	if !msg.IsFull {
+        localTree := BuildMerkleTree(gp.clusterState.Nodes)
+        if localTree.GetRootHash() != msg.RootHash {
+            // Mismatch detected, request full sync
+            go gp.requestFullSync(msg.From)
+        }
+        return
     }
 
     if msg.Version > gp.clusterState.Version {
@@ -190,6 +208,14 @@ func (gp *GossipProtocol) requestFullSync(nodeID string) {
 
 func (gp *GossipProtocol) HandleGossipSyncRequest(req models.GossipSyncRequest) {
     gp.mu.Lock()
+    
+    if senderNode, exists := gp.clusterState.Nodes[req.From]; exists {
+        senderNode.LastHeartbeat = time.Now()
+        if senderNode.Status != "active" {
+            log.Printf("[%s] Node %s recovered via sync request", gp.localNode.ID, req.From)
+            senderNode.Status = "active"
+        }
+    }
     
     merkleTree := BuildMerkleTree(gp.clusterState.Nodes)
     rootHash := merkleTree.GetRootHash()

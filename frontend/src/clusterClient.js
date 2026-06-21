@@ -80,16 +80,28 @@ function normalizeNode(node) {
     return null;
   }
 
+  const id = node.id ?? node.ID;
+  
+  // In a cloud environment like Render, the cluster API returns internal addresses and ports 
+  // (e.g. polaris:10000). We cross-reference with the public bootstrap URLs to override these.
+  if (id) {
+    const bootstrapMatch = bootstrapNodes.find(b => b.address && b.address.includes(id));
+    if (bootstrapMatch) {
+      return {
+        ...bootstrapMatch,
+        id: id,
+        status: String(node.status ?? node.Status ?? "active").toLowerCase(),
+      };
+    }
+  }
+
   const httpPort = Number(node.http_port ?? node.HTTPPort ?? node.httpPort);
   if (!Number.isFinite(httpPort) || httpPort <= 0) {
     return null;
   }
 
   return {
-    id:
-      node.id ??
-      node.ID ??
-      `${normalizeHost(node.address ?? node.Address)}:${httpPort}`,
+    id: id ?? `${normalizeHost(node.address ?? node.Address)}:${httpPort}`,
     address: normalizeHost(node.address ?? node.Address),
     http_port: httpPort,
     status: String(node.status ?? node.Status ?? "active").toLowerCase(),

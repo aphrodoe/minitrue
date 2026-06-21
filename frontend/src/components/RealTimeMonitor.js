@@ -23,7 +23,7 @@ const RealTimeMonitor = () => {
     totalMessages: 0,
     messagesPerSecond: 0,
   });
-  const [filter, setFilter] = useState({
+  const [filter] = useState({
     deviceId: '',
     metricName: '',
   });
@@ -35,7 +35,6 @@ const RealTimeMonitor = () => {
 
   const wsRef = useRef(null);
   const messageCountRef = useRef(0);
-  const lastSecondRef = useRef(Date.now());
   const reconnectTimeoutRef = useRef(null);
   const canvasRef = useRef(null);
   const wsUrlIndexRef = useRef(0);
@@ -43,7 +42,19 @@ const RealTimeMonitor = () => {
   useEffect(() => {
     connectWebSocket();
 
+    const statsInterval = setInterval(() => {
+      setStats(prev => {
+        const currentCount = messageCountRef.current;
+        messageCountRef.current = 0;
+        return {
+          ...prev,
+          messagesPerSecond: currentCount,
+        };
+      });
+    }, 1000);
+
     return () => {
+      clearInterval(statsInterval);
       if (wsRef.current) {
         wsRef.current.close();
       }
@@ -51,6 +62,7 @@ const RealTimeMonitor = () => {
         clearTimeout(reconnectTimeoutRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const connectWebSocket = () => {
@@ -80,16 +92,6 @@ const RealTimeMonitor = () => {
           ...prev,
           totalMessages: prev.totalMessages + newDataPoints.length,
         }));
-        
-        const now = Date.now();
-        if (now - lastSecondRef.current >= 1000) {
-          setStats(prev => ({
-            ...prev,
-            messagesPerSecond: messageCountRef.current,
-          }));
-          messageCountRef.current = 0;
-          lastSecondRef.current = now;
-        }
       } catch (err) {
         console.error('Error parsing message:', err);
       }

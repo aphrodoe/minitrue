@@ -26,7 +26,10 @@ func New(opts Options) (*Client, error) {
 	c := mqtt.NewClient(o)
 
 	token := c.Connect()
-	if token.Wait() && token.Error() != nil {
+	if !token.WaitTimeout(5 * time.Second) {
+		return nil, fmt.Errorf("timeout waiting to connect to MQTT broker at %s", opts.BrokerURL)
+	}
+	if token.Error() != nil {
 		return nil, token.Error()
 	}
 	return &Client{raw: c, brokerURL: opts.BrokerURL}, nil
