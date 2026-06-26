@@ -32,14 +32,32 @@ func main() {
 		portEnv = "8080"
 	}
 	go func() {
-		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Publisher is running"))
-		})
+		healthHandler := func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"status":"ok","service":"publisher"}`))
+		}
+		http.HandleFunc("/", healthHandler)
+		http.HandleFunc("/healthz", healthHandler)
 		log.Printf("Starting dummy HTTP server for health checks on port %s", portEnv)
 		if err := http.ListenAndServe(":"+portEnv, nil); err != nil {
 			log.Printf("HTTP server error: %v", err)
 		}
 	}()
+
+	if extURL := os.Getenv("RENDER_EXTERNAL_URL"); extURL != "" {
+		go func() {
+			for {
+				time.Sleep(10 * time.Minute)
+				resp, err := http.Get(extURL)
+				if err != nil {
+					log.Printf("Keep-alive ping failed: %v", err)
+				} else {
+					resp.Body.Close()
+				}
+			}
+		}()
+	}
 
 	mqttc, err := mqttclient.New(mqttclient.Options{
 		BrokerURL: *broker,

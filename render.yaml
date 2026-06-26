@@ -2,10 +2,11 @@ services:
   # 1. Polaris Node (Web Service)
   - type: web
     name: polaris
-    env: go
+    runtime: go
     plan: free
     buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
     startCommand: ./bin/minitrue-server
+    healthCheckPath: /healthz
     envVars:
       - key: MINITRUE_NODE_ID
         value: polaris
@@ -23,10 +24,11 @@ services:
   # 2. Sirius Node (Web Service)
   - type: web
     name: sirius
-    env: go
+    runtime: go
     plan: free
     buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
     startCommand: ./bin/minitrue-server
+    healthCheckPath: /healthz
     envVars:
       - key: MINITRUE_NODE_ID
         value: sirius
@@ -44,10 +46,11 @@ services:
   # 3. Vega Node (Web Service)
   - type: web
     name: vega
-    env: go
+    runtime: go
     plan: free
     buildCommand: go build -o bin/minitrue-server cmd/minitrue-server/main.go
     startCommand: ./bin/minitrue-server
+    healthCheckPath: /healthz
     envVars:
       - key: MINITRUE_NODE_ID
         value: vega
@@ -65,7 +68,8 @@ services:
   # 4. Publisher / Simulator (Web Service to pass Render health checks)
   - type: web
     name: publisher
-    env: go
+    runtime: go
     plan: free
     buildCommand: go build -o bin/publisher cmd/publisher/main.go
     startCommand: ./bin/publisher --sim=true --broker=tcp://broker.emqx.io:1883
+    healthCheckPath: /healthz

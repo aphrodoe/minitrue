@@ -158,17 +158,27 @@ func (cm *ClusterManager) Stop() error {
 }
 
 func (cm *ClusterManager) GetNodeHTTPPort(nodeID string) (int, error) {
+	node, err := cm.GetNodeInfo(nodeID)
+	if err != nil {
+		return 0, err
+	}
+
+	return node.HTTPPort, nil
+}
+
+func (cm *ClusterManager) GetNodeInfo(nodeID string) (*models.NodeInfo, error) {
 	cm.mu.RLock()
 	defer cm.mu.RUnlock()
 
 	if cm.gossipProtocol == nil {
-		return 0, fmt.Errorf("gossip protocol not initialized")
+		return nil, fmt.Errorf("gossip protocol not initialized")
 	}
 
 	node := cm.gossipProtocol.GetNodeByID(nodeID)
 	if node == nil {
-		return 0, fmt.Errorf("node %s not found", nodeID)
+		return nil, fmt.Errorf("node %s not found", nodeID)
 	}
 
-	return node.HTTPPort, nil
+	nodeCopy := *node
+	return &nodeCopy, nil
 }
