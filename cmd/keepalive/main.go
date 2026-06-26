@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -13,41 +15,69 @@ import (
 )
 
 type pingResult struct {
-	URL        string
-	StatusCode int
-	Err        error
-	Duration   time.Duration
+	InputURL     string
+	EffectiveURL string
+	StatusCode   int
+	Err          error
+	Duration     time.Duration
+	Attempts     int
 }
 
 func main() {
 	urlsFlag := flag.String("urls", envOrDefault("KEEPALIVE_URLS", ""), "comma-separated service URLs to ping")
 	interval := flag.Duration("interval", 5*time.Minute, "ping interval")
-	timeout := flag.Duration("timeout", 20*time.Second, "per-request timeout")
+	timeout := flag.Duration("timeout", 45*time.Second, "per-request timeout")
+	retries := flag.Int("retries", 3, "number of attempts per URL")
+	retryDelay := flag.Duration("retry-delay", 8*time.Second, "delay between retries")
 	once := flag.Bool("once", false, "ping once and exit")
 	flag.Parse()
 
-	urls := parseURLs(*urlsFlag)
-	if len(urls) == 0 {
+	inputs := parseInputURLs(*urlsFlag)
+	if len(inputs) == 0 {
 		log.Fatal("no keepalive URLs configured; set KEEPALIVE_URLS or pass -urls")
+	}
+	if *retries < 1 {
+		log.Fatal("-retries must be >= 1")
 	}
 
 	client := &http.Client{Timeout: *timeout}
 
 	for {
-		results := pingAll(client, urls, *timeout)
+		results := pingAll(client, inputs, *timeout, *retries, *retryDelay)
 		failed := false
+
 		for _, result := range results {
 			if result.Err != nil {
 				failed = true
-				log.Printf("FAIL %s: %v (%s)", result.URL, result.Err, result.Duration.Round(time.Millisecond))
+				log.Printf("FAIL %s: %v (attempts=%d, last_url=%s, elapsed=%s)",
+					result.InputURL,
+					result.Err,
+					result.Attempts,
+					result.EffectiveURL,
+					result.Duration.Round(time.Millisecond),
+				)
 				continue
 			}
-			if result.StatusCode < 200 || result.StatusCode >= 500 {
+
+			if !isHealthyStatus(result.StatusCode) {
 				failed = true
-				log.Printf("FAIL %s: status %d (%s)", result.URL, result.StatusCode, result.Duration.Round(time.Millisecond))
+				log.Printf("FAIL %s: status %d (attempts=%d, url=%s, elapsed=%s)",
+					result.InputURL,
+					result.StatusCode,
+					result.Attempts,
+					result.EffectiveURL,
+					result.Duration.Round(time.Millisecond),
+				)
 				continue
 			}
-			log.Printf("OK   %s: status %d (%s)", result.URL, result.StatusCode, result.Duration.Round(time.Millisecond))
+
+			log.Printf("OK   %s: status %d (attempts=%d, url=%s, elapsed=%s)",
+				result.InputURL,
+				result.StatusCode,
+				result.Attempts,
+				result.EffectiveURL,
+				result.Duration.Round(time.Millisecond),
+			)
 		}
 
 		if *once {
@@ -68,7 +98,7 @@ func envOrDefault(key, fallback string) string {
 	return fallback
 }
 
-func parseURLs(raw string) []string {
+func parseInputURLs(raw string) []string {
 	parts := strings.Split(raw, ",")
 	urls := make([]string, 0, len(parts))
 	for _, part := range parts {
@@ -79,33 +109,93 @@ func parseURLs(raw string) []string {
 		if !strings.HasPrefix(u, "http://") && !strings.HasPrefix(u, "https://") {
 			u = "https://" + u
 		}
-		u = strings.TrimRight(u, "/")
-		if !strings.Contains(strings.TrimPrefix(strings.TrimPrefix(u, "https://"), "http://"), "/") {
-			u += "/healthz"
-		}
 		urls = append(urls, u)
 	}
 	return urls
 }
 
-func pingAll(client *http.Client, urls []string, timeout time.Duration) []pingResult {
-	results := make([]pingResult, len(urls))
+func pingAll(client *http.Client, inputs []string, timeout time.Duration, retries int, retryDelay time.Duration) []pingResult {
+	results := make([]pingResult, len(inputs))
 	var wg sync.WaitGroup
-	wg.Add(len(urls))
+	wg.Add(len(inputs))
 
-	for i, u := range urls {
+	for i, input := range inputs {
 		go func(index int, target string) {
 			defer wg.Done()
-			results[index] = ping(client, target, timeout)
-		}(i, u)
+			results[index] = pingWithRetries(client, target, timeout, retries, retryDelay)
+		}(i, input)
 	}
 
 	wg.Wait()
 	return results
 }
 
-func ping(client *http.Client, target string, timeout time.Duration) pingResult {
+func pingWithRetries(client *http.Client, input string, timeout time.Duration, retries int, retryDelay time.Duration) pingResult {
 	start := time.Now()
+	candidates, buildErr := buildCandidateURLs(input)
+	if buildErr != nil {
+		return pingResult{InputURL: input, Err: buildErr, Duration: time.Since(start)}
+	}
+
+	last := pingResult{InputURL: input}
+	for attempt := 1; attempt <= retries; attempt++ {
+		for _, candidate := range candidates {
+			result := pingOne(client, candidate, timeout)
+			result.InputURL = input
+			result.Attempts = attempt
+			last = result
+
+			if result.Err == nil && isHealthyStatus(result.StatusCode) {
+				last.Duration = time.Since(start)
+				return last
+			}
+		}
+
+		if attempt < retries {
+			time.Sleep(retryDelay)
+		}
+	}
+
+	last.Duration = time.Since(start)
+	if last.Err == nil && !isHealthyStatus(last.StatusCode) {
+		last.Err = fmt.Errorf("unhealthy status %d", last.StatusCode)
+	}
+	if last.Err == nil {
+		last.Err = errors.New("ping failed")
+	}
+	return last
+}
+
+func buildCandidateURLs(raw string) ([]string, error) {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil {
+		return nil, err
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("invalid URL: %s", raw)
+	}
+
+	base := strings.TrimRight(u.Scheme+"://"+u.Host, "/")
+	path := strings.TrimSpace(u.EscapedPath())
+	query := u.RawQuery
+
+	if path == "" || path == "/" {
+		return []string{base + "/healthz", base + "/"}, nil
+	}
+
+	explicit := base + path
+	if query != "" {
+		explicit += "?" + query
+	}
+
+	if path == "/healthz" {
+		return []string{explicit, base + "/"}, nil
+	}
+
+	return []string{explicit}, nil
+}
+
+func pingOne(client *http.Client, target string, timeout time.Duration) pingResult {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -115,10 +205,9 @@ func ping(client *http.Client, target string, timeout time.Duration) pingResult 
 	}
 
 	return pingResult{
-		URL:        target,
-		StatusCode: statusCode,
-		Err:        err,
-		Duration:   time.Since(start),
+		EffectiveURL: target,
+		StatusCode:   statusCode,
+		Err:          err,
 	}
 }
 
@@ -139,4 +228,8 @@ func doRequest(ctx context.Context, client *http.Client, method, target string) 
 		return resp.StatusCode, fmt.Errorf("server returned %d", resp.StatusCode)
 	}
 	return resp.StatusCode, nil
+}
+
+func isHealthyStatus(statusCode int) bool {
+	return statusCode >= 200 && statusCode < 500
 }

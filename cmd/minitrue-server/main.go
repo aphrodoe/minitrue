@@ -52,15 +52,37 @@ func getEnvInt(key string, fallback int) int {
 	return fallback
 }
 
+func connectMQTTWithRetry(brokerURL, clientID string) *mqttclient.Client {
+	backoff := 3 * time.Second
+	for {
+		mqttc, err := mqttclient.New(mqttclient.Options{
+			BrokerURL: brokerURL,
+			ClientID:  clientID,
+		})
+		if err == nil {
+			return mqttc
+		}
+
+		log.Printf("MQTT connect failed (%v). Retrying in %s...", err, backoff)
+		time.Sleep(backoff)
+		if backoff < 30*time.Second {
+			backoff *= 2
+			if backoff > 30*time.Second {
+				backoff = 30 * time.Second
+			}
+		}
+	}
+}
+
 func main() {
 	logger.SetupBeautifulLogging()
 
 	mode := flag.String("mode", getEnvStr("MINITRUE_MODE", "ingestion"), "mode: ingestion | query (HTTP plus read-only MQTT for /ws) | all")
 	nodeID := flag.String("node_id", getEnvStr("MINITRUE_NODE_ID", ""), "node identifier (leave empty to auto-assign a local cluster slot)")
-	
+
 	defaultPort := getEnvInt("PORT", getEnvInt("MINITRUE_PORT", 0))
 	port := flag.Int("port", defaultPort, "HTTP port for query server (0 = auto-assign based on node ID)")
-	
+
 	tcpPort := flag.Int("tcp_port", getEnvInt("MINITRUE_TCP_PORT", 0), "TCP port for internode communication (0 = auto-assign based on node ID)")
 	broker := flag.String("broker", getEnvStr("MINITRUE_BROKER", "tcp://localhost:1883"), "MQTT broker URL")
 	dataDir := flag.String("data_dir", getEnvStr("MINITRUE_DATA_DIR", "data"), "directory for storing data files")
@@ -143,14 +165,7 @@ func main() {
 
 	log.Printf("[%s] Cluster manager initialized (TCP server on port %d)", resolvedNodeID, actualTCPPort)
 
-	mqttOpts := mqttclient.Options{
-		BrokerURL: *broker,
-		ClientID:  fmt.Sprintf("minitrue-%s-%d", resolvedNodeID, time.Now().UnixNano()),
-	}
-	mqttc, err := mqttclient.New(mqttOpts)
-	if err != nil {
-		log.Fatalf("MQTT client error: %v", err)
-	}
+	mqttc := connectMQTTWithRetry(*broker, fmt.Sprintf("minitrue-%s-%d", resolvedNodeID, time.Now().UnixNano()))
 	defer mqttc.Close()
 
 	switch *mode {

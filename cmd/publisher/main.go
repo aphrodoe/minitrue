@@ -17,6 +17,28 @@ import (
 	"github.com/tarm/serial"
 )
 
+func connectMQTTWithRetry(brokerURL, clientID string) *mqttclient.Client {
+	backoff := 3 * time.Second
+	for {
+		mqttc, err := mqttclient.New(mqttclient.Options{
+			BrokerURL: brokerURL,
+			ClientID:  clientID,
+		})
+		if err == nil {
+			return mqttc
+		}
+
+		log.Printf("mqtt connect failed (%v). Retrying in %s...", err, backoff)
+		time.Sleep(backoff)
+		if backoff < 30*time.Second {
+			backoff *= 2
+			if backoff > 30*time.Second {
+				backoff = 30 * time.Second
+			}
+		}
+	}
+}
+
 func main() {
 	logger.SetupBeautifulLogging()
 
@@ -59,13 +81,7 @@ func main() {
 		}()
 	}
 
-	mqttc, err := mqttclient.New(mqttclient.Options{
-		BrokerURL: *broker,
-		ClientID:  fmt.Sprintf("arduino-pub-%d", time.Now().UnixNano()),
-	})
-	if err != nil {
-		log.Fatalf("mqtt connect: %v", err)
-	}
+	mqttc := connectMQTTWithRetry(*broker, fmt.Sprintf("arduino-pub-%d", time.Now().UnixNano()))
 	defer mqttc.Close()
 
 	if *sim {

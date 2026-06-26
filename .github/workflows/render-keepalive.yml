@@ -14,7 +14,7 @@ concurrency:
 jobs:
   ping-render-services:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 6
     env:
       # Override this in GitHub repo Settings → Secrets and variables → Actions → Variables
       # if Render assigned different public hostnames.
@@ -28,4 +28,4 @@ jobs:
           cache: true
 
       - name: Ping Render services
-        run: go run ./cmd/keepalive -once -timeout=30s -urls "$RENDER_KEEPALIVE_URLS"
+        run: go run ./cmd/keepalive -once -timeout=45s -retries=3 -retry-delay=8s -urls "$RENDER_KEEPALIVE_URLS"
