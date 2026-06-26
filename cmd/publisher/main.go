@@ -41,6 +41,20 @@ func main() {
 		}
 	}()
 
+	if extURL := os.Getenv("RENDER_EXTERNAL_URL"); extURL != "" {
+		go func() {
+			for {
+				time.Sleep(10 * time.Minute)
+				resp, err := http.Get(extURL)
+				if err != nil {
+					log.Printf("Keep-alive ping failed: %v", err)
+				} else {
+					resp.Body.Close()
+				}
+			}
+		}()
+	}
+
 	mqttc, err := mqttclient.New(mqttclient.Options{
 		BrokerURL: *broker,
 		ClientID:  fmt.Sprintf("arduino-pub-%d", time.Now().UnixNano()),

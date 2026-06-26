@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -174,6 +175,20 @@ func main() {
 		log.Printf("[%s] Query HTTP server running on :%d", resolvedNodeID, actualHTTPPort)
 	default:
 		log.Fatalf("Unknown mode: %s (must be: ingestion, query, or all)", *mode)
+	}
+
+	if extURL := os.Getenv("RENDER_EXTERNAL_URL"); extURL != "" {
+		go func() {
+			for {
+				time.Sleep(10 * time.Minute)
+				resp, err := http.Get(extURL)
+				if err != nil {
+					log.Printf("[%s] Keep-alive ping failed: %v", resolvedNodeID, err)
+				} else {
+					resp.Body.Close()
+				}
+			}
+		}()
 	}
 
 	c := make(chan os.Signal, 1)
