@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 	"time"
 
@@ -125,6 +127,8 @@ func defaultClusterStateProvider() models.ClusterState {
 }
 
 func (s *Service) StartHTTP(port int) {
+	http.HandleFunc("/", s.handleHealth)
+	http.HandleFunc("/healthz", s.handleHealth)
 	http.HandleFunc("/query", s.handleQuery)
 	http.HandleFunc("/query-samples", s.handleQuerySamples)
 	http.HandleFunc("/query-aggregated", s.handleQueryAggregated)
@@ -145,12 +149,38 @@ func (s *Service) StartHTTP(port int) {
 
 	// Start background read-repair loop
 	s.StartReadRepairLoop()
-	
+
 	// Start migration hooks
 	s.StartMigrationHooks()
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatalf("http server error: %v", err)
+	}
+}
+
+func (s *Service) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if setCORS(w, r) {
+		return
+	}
+
+	if r.URL.Path != "/" && r.URL.Path != "/healthz" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if r.Method != http.MethodHead {
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":  "ok",
+			"node_id": s.nodeID,
+			"time":    time.Now().Unix(),
+		})
 	}
 }
 
@@ -373,12 +403,12 @@ func (s *Service) distributedQueryAggregated(qr QueryRequest) (storage.QueryStat
 }
 
 func (s *Service) queryRemoteNodeAggregated(nodeID string, qr QueryRequest) (storage.QueryStats, error) {
-	port := s.getNodePort(nodeID)
-	if port == 0 {
-		return storage.QueryStats{}, fmt.Errorf("unknown node port for %s", nodeID)
+	endpoint, err := s.getNodeHTTPEndpoint(nodeID)
+	if err != nil {
+		return storage.QueryStats{}, err
 	}
 
-	url := fmt.Sprintf("http://localhost:%d/query-aggregated", port)
+	url := endpoint + "/query-aggregated"
 
 	reqBody, err := json.Marshal(qr)
 	if err != nil {
@@ -411,15 +441,47 @@ func (s *Service) queryRemoteNodeAggregated(nodeID string, qr QueryRequest) (sto
 	return stats, nil
 }
 
-func (s *Service) getNodePort(nodeID string) int {
+func (s *Service) getNodeHTTPEndpoint(nodeID string) (string, error) {
 	clusterMgr := cluster.GetClusterManager()
-	if clusterMgr != nil {
-		if port, err := clusterMgr.GetNodeHTTPPort(nodeID); err == nil {
-			return port
+	if clusterMgr == nil {
+		return "", fmt.Errorf("cluster manager not initialized")
+	}
+
+	node, err := clusterMgr.GetNodeInfo(nodeID)
+	if err != nil {
+		return "", err
+	}
+	if node.HTTPPort <= 0 {
+		return "", fmt.Errorf("unknown HTTP port for %s", nodeID)
+	}
+
+	address := strings.TrimSpace(node.Address)
+	if address == "" {
+		address = "localhost"
+	}
+
+	protocol := "http"
+	host := address
+	if strings.HasPrefix(address, "http://") || strings.HasPrefix(address, "https://") {
+		parsed, err := url.Parse(address)
+		if err != nil {
+			return "", fmt.Errorf("invalid node address for %s: %w", nodeID, err)
+		}
+		protocol = parsed.Scheme
+		host = parsed.Hostname()
+	} else if strings.Contains(address, ":") {
+		if parsed, err := url.Parse("tcp://" + address); err == nil && parsed.Hostname() != "" {
+			host = parsed.Hostname()
+		} else {
+			host = strings.Split(address, ":")[0]
 		}
 	}
 
-	return 0
+	if host == "" {
+		host = "localhost"
+	}
+
+	return fmt.Sprintf("%s://%s:%d", protocol, host, node.HTTPPort), nil
 }
 
 func (s *Service) handleQuerySamples(w http.ResponseWriter, r *http.Request) {

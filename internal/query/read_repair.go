@@ -2,10 +2,10 @@ package query
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -125,15 +125,15 @@ func (s *Service) performReadRepair() {
 }
 
 func (s *Service) repairWithPeer(peerID, deviceID, metric string) {
-	port := s.getNodePort(peerID)
-	if port == 0 {
+	endpoint, err := s.getNodeHTTPEndpoint(peerID)
+	if err != nil {
 		return
 	}
 
 	seriesKey := deviceID + "|" + metric
-	url := fmt.Sprintf("http://localhost:%d/internal/digest?series=%s", port, seriesKey)
+	digestURL := endpoint + "/internal/digest?series=" + url.QueryEscape(seriesKey)
 
-	resp, err := s.httpClient.Get(url)
+	resp, err := s.httpClient.Get(digestURL)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return
 	}
@@ -161,15 +161,15 @@ func (s *Service) repairWithPeer(peerID, deviceID, metric string) {
 }
 
 func (s *Service) syncFromPeer(peerID, deviceID, metric string) {
-	port := s.getNodePort(peerID)
-	if port == 0 {
+	endpoint, err := s.getNodeHTTPEndpoint(peerID)
+	if err != nil {
 		return
 	}
 
 	seriesKey := deviceID + "|" + metric
-	url := fmt.Sprintf("http://localhost:%d/internal/sync?series=%s", port, seriesKey)
+	syncURL := endpoint + "/internal/sync?series=" + url.QueryEscape(seriesKey)
 
-	resp, err := s.httpClient.Get(url)
+	resp, err := s.httpClient.Get(syncURL)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		log.Printf("[ReadRepair] Failed to fetch sync data from %s: %v", peerID, err)
 		return
