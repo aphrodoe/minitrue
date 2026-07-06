@@ -1,0 +1,31 @@
+name: Render Keepalive
+
+on:
+  schedule:
+    # Render free web services sleep after roughly 15 minutes of inactivity.
+    # GitHub Actions scheduled workflows support a 5-minute minimum cadence.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: render-keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping-render-services:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      # Override this in GitHub repo Settings → Secrets and variables → Actions → Variables
+      # if Render assigned different public hostnames.
+      RENDER_KEEPALIVE_URLS: ${{ vars.RENDER_KEEPALIVE_URLS || 'https://polaris.onrender.com,https://sirius.onrender.com,https://vega.onrender.com,https://publisher.onrender.com' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Ping Render services
+        run: go run ./cmd/keepalive -once -allow-failures -timeout=45s -retries=3 -retry-delay=8s -urls "$RENDER_KEEPALIVE_URLS"
