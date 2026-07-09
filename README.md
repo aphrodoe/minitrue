@@ -28,42 +28,48 @@ MiniTrue is divided into four highly specialized, decoupled layers:
 4.  **The Query Layer**: A decentralized engine that performs Quorum reads and on-the-fly conflict resolution.
 
 ```mermaid
-graph TD
-    %% Define Styles
-    classDef client fill:#ff9a9e,stroke:#333,stroke-width:2px,color:black
-    classDef router fill:#fecfef,stroke:#333,stroke-width:2px,color:black
-    classDef storage fill:#a1c4fd,stroke:#333,stroke-width:2px,color:black
-    classDef frontend fill:#c2e9fb,stroke:#333,stroke-width:2px,color:black
+graph LR
+    %% Modern Styles
+    classDef client fill:#2a2a35,stroke:#4facfe,stroke-width:2px,color:#fff,rx:10,ry:10,padding:20px
+    classDef router fill:#1e293b,stroke:#00f2fe,stroke-width:2px,color:#fff,rx:10,ry:10,padding:20px
+    classDef storage fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#fff,rx:10,ry:10,padding:20px
+    classDef group fill:none,stroke:#475569,stroke-width:2px,stroke-dasharray: 5 5,rx:15,ry:15
 
-    %% Entities
-    Sensors["📡 IoT Sensors<br/>(Publisher)"]:::client
-    UI["💻 React Dashboard<br/>(Query UI)"]:::frontend
-    
-    subgraph "Stateless Gateway Layer"
-        Router["⚡ minitrue-router<br/>(Consistent Hashing)"]:::router
+    %% Client Layer
+    subgraph Clients ["External Clients"]
+        Sensors["📡 IoT Sensors<br/>(Data Publisher)"]:::client
+        UI["💻 React Dashboard<br/>(Web Interface)"]:::client
     end
+    class Clients group
 
-    subgraph "Distributed Storage & Query Layer"
-        NodeA["💾 Storage Node A<br/>(polaris)"]:::storage
-        NodeB["💾 Storage Node B<br/>(sirius)"]:::storage
-        NodeC["💾 Storage Node C<br/>(vega)"]:::storage
+    %% Gateway Layer
+    subgraph Gateway ["Ingestion Layer"]
+        Router["⚡ minitrue-router<br/>(Stateless Gateway)"]:::router
     end
+    class Gateway group
+
+    %% Storage Layer
+    subgraph Cluster ["Decentralized Storage & Query Engine"]
+        NodeA["💾 Node A<br/>(polaris)"]:::storage
+        NodeB["💾 Node B<br/>(sirius)"]:::storage
+        NodeC["💾 Node C<br/>(vega)"]:::storage
+    end
+    class Cluster group
 
     %% Ingestion Flow
-    Sensors -- "HTTP POST /route" --> Router
-    Router -. "Forwards to Primary" .-> NodeB
-    Router -. "Forwards to Replica" .-> NodeC
-
-    %% Gossip Network
-    NodeA <-->|"TCP Gossip & Anti-Entropy"| NodeB
-    NodeB <-->|"TCP Gossip & Anti-Entropy"| NodeC
-    NodeC <-->|"TCP Gossip & Anti-Entropy"| NodeA
-    Router <-->|"Listens to Ring Topology"| NodeA
+    Sensors -- "POST /route" --> Router
+    Router -. "Quorum Write" .-> NodeB
+    Router -. "Quorum Write" .-> NodeC
 
     %% Query Flow
-    UI == "HTTP POST /query" ==> NodeA
+    UI == "POST /query" ==> NodeA
     NodeA -. "Scatter-Gather" .-> NodeB
     NodeA -. "Scatter-Gather" .-> NodeC
+
+    %% Internal Gossip (Invisible links to align vertically if needed, but standard links work)
+    NodeA <-->|"TCP Gossip"| NodeB
+    NodeB <-->|"TCP Gossip"| NodeC
+    NodeC <-->|"TCP Gossip"| NodeA
 ```
 
 ---
