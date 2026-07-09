@@ -27,6 +27,45 @@ MiniTrue is divided into four highly specialized, decoupled layers:
 3.  **The Cluster Management Layer**: A peer-to-peer network utilizing Gossip Protocols and Merkle Trees to maintain global state without a master node.
 4.  **The Query Layer**: A decentralized engine that performs Quorum reads and on-the-fly conflict resolution.
 
+```mermaid
+graph TD
+    %% Define Styles
+    classDef client fill:#ff9a9e,stroke:#333,stroke-width:2px,color:black
+    classDef router fill:#fecfef,stroke:#333,stroke-width:2px,color:black
+    classDef storage fill:#a1c4fd,stroke:#333,stroke-width:2px,color:black
+    classDef frontend fill:#c2e9fb,stroke:#333,stroke-width:2px,color:black
+
+    %% Entities
+    Sensors["📡 IoT Sensors<br/>(Publisher)"]:::client
+    UI["💻 React Dashboard<br/>(Query UI)"]:::frontend
+    
+    subgraph "Stateless Gateway Layer"
+        Router["⚡ minitrue-router<br/>(Consistent Hashing)"]:::router
+    end
+
+    subgraph "Distributed Storage & Query Layer"
+        NodeA["💾 Storage Node A<br/>(polaris)"]:::storage
+        NodeB["💾 Storage Node B<br/>(sirius)"]:::storage
+        NodeC["💾 Storage Node C<br/>(vega)"]:::storage
+    end
+
+    %% Ingestion Flow
+    Sensors -- "HTTP POST /route" --> Router
+    Router -. "Forwards to Primary" .-> NodeB
+    Router -. "Forwards to Replica" .-> NodeC
+
+    %% Gossip Network
+    NodeA <-->|"TCP Gossip & Anti-Entropy"| NodeB
+    NodeB <-->|"TCP Gossip & Anti-Entropy"| NodeC
+    NodeC <-->|"TCP Gossip & Anti-Entropy"| NodeA
+    Router <-->|"Listens to Ring Topology"| NodeA
+
+    %% Query Flow
+    UI == "HTTP POST /query" ==> NodeA
+    NodeA -. "Scatter-Gather" .-> NodeB
+    NodeA -. "Scatter-Gather" .-> NodeC
+```
+
 ---
 
 ## In-Depth Architectural Design
