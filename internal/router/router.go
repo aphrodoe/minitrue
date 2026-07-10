@@ -115,6 +115,7 @@ func (r *Router) Route(dp models.DataPoint) error {
 	wg.Wait()
 	close(ch)
 
+	var primarySuccess, replicaSuccess bool
 	var errs []error
 	for res := range ch {
 		if res.err != nil {
@@ -122,11 +123,22 @@ func (r *Router) Route(dp models.DataPoint) error {
 			errs = append(errs, fmt.Errorf("%s(%s): %w", res.node, res.role, res.err))
 		} else {
 			log.Printf("[Router] forwarded to %s (%s) %s/%s=%.4f", res.node, res.role, dp.DeviceID, dp.MetricName, dp.Value)
+			if res.role == "primary" {
+				primarySuccess = true
+			} else if res.role == "replica" {
+				replicaSuccess = true
+			}
 		}
 	}
 
-	if len(errs) > 0 {
-		return fmt.Errorf("forward errors: %v", errs)
+	// Require at least primary to succeed for durability
+	if !primarySuccess {
+		return fmt.Errorf("primary write failed: %v", errs)
+	}
+
+	// Warn if replica failed, but don't fail the write
+	if !replicaSuccess {
+		log.Printf("[Router] Warning: replica write failed for %s/%s (will be recovered via read-repair)", dp.DeviceID, dp.MetricName)
 	}
 
 	return nil

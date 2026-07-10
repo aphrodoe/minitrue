@@ -6,11 +6,11 @@ import (
 )
 
 func (m *UnifiedStorage) GetSeriesDigest(deviceID, metric string) (uint32, int, error) {
-	key := deviceID + "|" + metric
+	key := deviceID + ":" + metric
 
 	// Force a flush so we don't have pending batches that aren't in segments.
 	m.mu.Lock()
-	m.flushBatchUnlocked()
+	m.flushBatchLocked()
 	m.mu.Unlock()
 
 	segmentFiles, err := m.segmentFilesForSeries(key)
@@ -44,10 +44,10 @@ func (m *UnifiedStorage) GetSeriesDigest(deviceID, metric string) (uint32, int, 
 }
 
 func (m *UnifiedStorage) GetSeriesRecords(deviceID, metric string) ([]models.Record, error) {
-	key := deviceID + "|" + metric
+	key := deviceID + ":" + metric
 
 	m.mu.Lock()
-	m.flushBatchUnlocked()
+	m.flushBatchLocked()
 	m.mu.Unlock()
 
 	segmentFiles, err := m.segmentFilesForSeries(key)

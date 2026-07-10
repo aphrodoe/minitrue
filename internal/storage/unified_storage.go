@@ -21,6 +21,7 @@ type Storage interface {
 	PersistPrimary(dp models.DataPoint) error
 	PersistReplica(dp models.DataPoint) error
 	Query(deviceID, metric string, start, end int64) ([]float64, error)
+	QueryWithTimestamps(deviceID, metric string, start, end int64) ([]models.Record, error)
 	QueryAggregated(deviceID, metric string, start, end int64) (QueryStats, error)
 	Delete(deviceID, metric string) error
 	Reload() error
@@ -133,6 +134,7 @@ func (s *Series) Insert(newSample sample) {
 
 type UnifiedStorage struct {
 	mu                         sync.RWMutex
+	flushLock                  sync.Mutex
 	data                       map[string]*Series
 	file                       *os.File
 	engine                     *StorageEngine
@@ -145,6 +147,7 @@ type UnifiedStorage struct {
 	nextSegmentSeq             map[string]int
 	compactionInterval         time.Duration
 	compactionSegmentThreshold int
+	reloadComplete             sync.WaitGroup
 
 	// WAL provides crash-durability for in-flight primary writes.
 	// Every primary write is fsynced to the WAL before in-memory state is
@@ -216,9 +219,13 @@ func NewUnifiedStorage(filepath string) *UnifiedStorage {
 		tombstones:                 tombstones,
 	}
 
-	if err := storage.Reload(); err != nil {
-		log.Printf("[Storage-%s] Warning: Failed to reload data from disk: %v", nodeID, err)
-	}
+	storage.reloadComplete.Add(1)
+	go func() {
+		if err := storage.Reload(); err != nil {
+			log.Printf("[Storage-%s] Warning: Failed to reload data from disk: %v", nodeID, err)
+		}
+		storage.reloadComplete.Done()
+	}()
 
 	go storage.periodicFlush()
 	go storage.periodicCompaction()
@@ -406,7 +413,7 @@ func (m *UnifiedStorage) periodicFlush() {
 		m.mu.Lock()
 		if len(m.batch) > 0 {
 			log.Printf("[Storage-%s] Periodic flush: %d records", m.nodeID, len(m.batch))
-			m.flushBatchUnlocked()
+			m.flushBatchLocked()
 		}
 		m.mu.Unlock()
 	}
@@ -441,7 +448,7 @@ func (m *UnifiedStorage) persist(dp models.DataPoint, role string) error {
 		ts = time.Now().Unix()
 	}
 
-	key := dp.DeviceID + "|" + dp.MetricName
+	key := dp.DeviceID + ":" + dp.MetricName
 
 	// Reject writes to tombstoned series immediately — they were deleted.
 	if m.tombstones != nil && m.tombstones.Has(key) {
@@ -451,8 +458,8 @@ func (m *UnifiedStorage) persist(dp models.DataPoint, role string) error {
 	// WAL must be written and fsynced BEFORE in-memory state is updated.
 	// This guarantees that if we crash after Append returns, the entry can
 	// be replayed on the next startup to recover the write.
-	// Only primary writes go to the WAL; replicas are recovered via read-repair.
-	if role == "primary" && m.wal != nil {
+	// Both primary and replica writes go to the WAL for durability.
+	if m.wal != nil {
 		entry := WALEntry{
 			DeviceID:   dp.DeviceID,
 			MetricName: dp.MetricName,
@@ -483,14 +490,16 @@ func (m *UnifiedStorage) persist(dp models.DataPoint, role string) error {
 		})
 		if len(m.batch) >= m.batchSize {
 			log.Printf("[Storage-%s] Batch full: flushing %d records", m.nodeID, len(m.batch))
-			m.flushBatchUnlocked()
+			m.flushBatchLocked()
 		}
 	}
 	m.mu.Unlock()
 	return nil
 }
 
-func (m *UnifiedStorage) flushBatchUnlocked() {
+// flushBatchLocked flushes pending records to disk. MUST be called with m.mu held.
+// Uses a separate flushLock for file I/O to avoid holding the data lock during disk operations.
+func (m *UnifiedStorage) flushBatchLocked() {
 	if len(m.batch) == 0 {
 		return
 	}
@@ -502,7 +511,7 @@ func (m *UnifiedStorage) flushBatchUnlocked() {
 
 	writesBySeries := make(map[string]*segmentWrite)
 	for _, record := range m.batch {
-		seriesKey := record.DeviceID + "|" + record.MetricName
+		seriesKey := record.DeviceID + ":" + record.MetricName
 		write, ok := writesBySeries[seriesKey]
 		if !ok {
 			sequence := m.nextSegmentSeq[seriesKey]
@@ -527,7 +536,10 @@ func (m *UnifiedStorage) flushBatchUnlocked() {
 	m.batch = m.batch[:0]
 	m.lastFlush = time.Now()
 
+	// Release the data lock but acquire flush lock to prevent concurrent flushes
 	m.mu.Unlock()
+	m.flushLock.Lock()
+	defer m.flushLock.Unlock()
 
 	if err := os.MkdirAll(m.segmentDir, 0755); err != nil {
 		log.Printf("[Storage-%s] ERROR creating segment directory %s: %v", m.nodeID, m.segmentDir, err)
@@ -578,7 +590,7 @@ func binarySearchEnd(arr []sample, end int64) int {
 }
 
 func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]float64, error) {
-	key := deviceID + "|" + metric
+	key := deviceID + ":" + metric
 
 	// Fast O(1) tombstone gate — no lock needed on the series map.
 	if m.tombstones != nil && m.tombstones.Has(key) {
@@ -629,8 +641,64 @@ func (m *UnifiedStorage) Query(deviceID, metric string, start, end int64) ([]flo
 	return res, nil
 }
 
+// QueryWithTimestamps returns records with timestamps for proper conflict resolution
+func (m *UnifiedStorage) QueryWithTimestamps(deviceID, metric string, start, end int64) ([]models.Record, error) {
+	key := deviceID + ":" + metric
+
+	if m.tombstones != nil && m.tombstones.Has(key) {
+		return []models.Record{}, nil
+	}
+
+	m.mu.RLock()
+	series, ok := m.data[key]
+	m.mu.RUnlock()
+
+	if !ok || len(series.Chunks) == 0 {
+		return []models.Record{}, nil
+	}
+
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	if start == 0 {
+		start = 0
+	}
+	if end == 0 {
+		end = math.MaxInt64
+	}
+
+	var res []models.Record
+
+	for _, chunk := range series.Chunks {
+		if chunk.EndTime < start || chunk.StartTime > end {
+			continue
+		}
+
+		startIdx := binarySearchStart(chunk.Samples, start)
+		if startIdx >= len(chunk.Samples) {
+			continue
+		}
+
+		endIdx := binarySearchEnd(chunk.Samples, end)
+		if endIdx < startIdx {
+			continue
+		}
+
+		for i := startIdx; i <= endIdx; i++ {
+			res = append(res, models.Record{
+				Timestamp:  chunk.Samples[i].Timestamp,
+				Value:      chunk.Samples[i].Value,
+				DeviceID:   deviceID,
+				MetricName: metric,
+			})
+		}
+	}
+
+	return res, nil
+}
+
 func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int64) (QueryStats, error) {
-	key := deviceID + "|" + metric
+	key := deviceID + ":" + metric
 
 	// Fast O(1) tombstone gate.
 	if m.tombstones != nil && m.tombstones.Has(key) {
@@ -726,7 +794,7 @@ func (m *UnifiedStorage) QueryAggregated(deviceID, metric string, start, end int
 // tombstone. Physical removal of .parq segment files is deferred to the
 // background compaction goroutine — no file reads or rewrites on the hot path.
 func (m *UnifiedStorage) Delete(deviceID, metric string) error {
-	key := deviceID + "|" + metric
+	key := deviceID + ":" + metric
 
 	// 1. Write the tombstone to disk first (atomic temp-rename). After this
 	//    returns, Has() will return true and all reads will return empty.
@@ -803,7 +871,7 @@ func (m *UnifiedStorage) Reload() error {
 			return fmt.Errorf("failed to read segment %s: %w", segmentFile, err)
 		}
 		for _, record := range segmentRecords {
-			seriesKey := record.DeviceID + "|" + record.MetricName
+			seriesKey := record.DeviceID + ":" + record.MetricName
 			// Skip records that belong to tombstoned series.
 			if m.tombstones != nil && m.tombstones.Has(seriesKey) {
 				continue
@@ -895,13 +963,16 @@ func (m *UnifiedStorage) replayWAL() {
 }
 
 func (m *UnifiedStorage) Close() error {
+	// Wait for reload to complete before closing
+	m.reloadComplete.Wait()
+
 	m.mu.Lock()
 
 	log.Printf("[Storage-%s] Closing storage, flushing remaining %d records", m.nodeID, len(m.batch))
 
 	if len(m.batch) > 0 {
-		// flushBatchUnlocked will also truncate the WAL on success.
-		m.flushBatchUnlocked()
+		// flushBatchLocked will also truncate the WAL on success.
+		m.flushBatchLocked()
 	}
 
 	m.mu.Unlock()

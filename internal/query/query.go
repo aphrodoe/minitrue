@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -95,6 +96,7 @@ func (s *Service) StartHTTP(port int) {
 	mux.HandleFunc("/ingest", s.handleIngest)
 	mux.HandleFunc("/query", s.handleQuery)
 	mux.HandleFunc("/query-samples", s.handleQuerySamples)
+	mux.HandleFunc("/query-samples-records", s.handleQuerySamplesRecords)
 	mux.HandleFunc("/query-aggregated", s.handleQueryAggregated)
 	mux.HandleFunc("/delete", s.handleDelete)
 	mux.HandleFunc("/cluster/members", s.handleClusterMembers)
@@ -586,6 +588,37 @@ func (s *Service) handleQueryAggregated(w http.ResponseWriter, r *http.Request) 
 }
 
 // ---------------------------------------------------------------------------
+// Query samples with timestamps (for conflict resolution)
+// ---------------------------------------------------------------------------
+
+func (s *Service) handleQuerySamplesRecords(w http.ResponseWriter, r *http.Request) {
+	qr, ok := parseQueryRequest(w, r)
+	if !ok {
+		return
+	}
+
+	if qr.DeviceID == "" || qr.MetricName == "" {
+		http.Error(w, "missing fields", http.StatusBadRequest)
+		return
+	}
+
+	records, err := s.store.QueryWithTimestamps(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
+	if err != nil {
+		http.Error(w, "storage error", http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Records []models.Record `json:"records"`
+	}{
+		Records: records,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+// ---------------------------------------------------------------------------
 // Quorum Reads for Raw Samples
 // ---------------------------------------------------------------------------
 
@@ -615,26 +648,26 @@ func (s *Service) distributedQuerySamples(qr QueryRequest) ([]float64, error) {
 	log.Printf("[Query] Samples Quorum=%d. Querying %d nodes for device=%s metric=%s", quorum, len(selectedNodes), qr.DeviceID, qr.MetricName)
 
 	var wg sync.WaitGroup
-	resultChan := make(chan []float64, len(selectedNodes))
+	resultChan := make(chan []models.Record, len(selectedNodes))
 	errorChan := make(chan error, len(selectedNodes))
 
 	for _, nodeID := range selectedNodes {
 		wg.Add(1)
 		go func(nID string) {
 			defer wg.Done()
-			var samples []float64
+			var records []models.Record
 			var err error
 			if s.nodeID != "" && nID == s.nodeID {
-				samples, err = s.store.Query(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
+				records, err = s.store.QueryWithTimestamps(qr.DeviceID, qr.MetricName, qr.StartTime, qr.EndTime)
 			} else {
-				samples, err = s.queryRemoteNodeSamples(nID, qr)
+				records, err = s.queryRemoteNodeSamplesWithTimestamps(nID, qr)
 			}
 			if err != nil {
 				log.Printf("[Query] Failed to query node %s for samples: %v", nID, err)
 				errorChan <- err
 				return
 			}
-			resultChan <- samples
+			resultChan <- records
 		}(nodeID)
 	}
 
@@ -646,18 +679,46 @@ func (s *Service) distributedQuerySamples(qr QueryRequest) ([]float64, error) {
 		return nil, fmt.Errorf("failed to reach quorum (got %d, needed %d)", len(resultChan), quorum)
 	}
 
-	// Because these are raw floats (without timestamps attached at this endpoint level),
-	// resolving them perfectly is tricky without full records. We take the response with
-	// the most points, under the assumption that it's the most complete.
-	var bestSamples []float64
-	for samples := range resultChan {
-		if len(samples) > len(bestSamples) {
-			bestSamples = samples
+	// Merge records with timestamp deduplication for conflict resolution
+	mergedRecords := mergeRecordsByTimestamp(resultChan)
+
+	// Extract just the values for backward compatibility
+	var result []float64
+	for _, r := range mergedRecords {
+		result = append(result, r.Value)
+	}
+
+	log.Printf("[Query] Met quorum %d. Returning merged samples (count=%d)", quorum, len(result))
+	return result, nil
+}
+
+// mergeRecordsByTimestamp deduplicates records across replicas by timestamp
+func mergeRecordsByTimestamp(resultChan <-chan []models.Record) []models.Record {
+	recordMap := make(map[int64]models.Record)
+
+	for records := range resultChan {
+		for _, r := range records {
+			if existing, ok := recordMap[r.Timestamp]; !ok {
+				recordMap[r.Timestamp] = r
+			} else {
+				// If duplicate timestamp exists, keep the one received first
+				// In practice, they should be identical on replicas
+				_ = existing
+			}
 		}
 	}
 
-	log.Printf("[Query] Met quorum %d. Returning best samples (count=%d)", quorum, len(bestSamples))
-	return bestSamples, nil
+	result := make([]models.Record, 0, len(recordMap))
+	for _, r := range recordMap {
+		result = append(result, r)
+	}
+
+	// Sort by timestamp for consistent ordering
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Timestamp < result[j].Timestamp
+	})
+
+	return result
 }
 
 func (s *Service) queryRemoteNodeSamples(nodeID string, qr QueryRequest) ([]float64, error) {
@@ -699,6 +760,47 @@ func (s *Service) queryRemoteNodeSamples(nodeID string, qr QueryRequest) ([]floa
 
 	log.Printf("[Query] Node %s returned %d samples", nodeID, len(response.Samples))
 	return response.Samples, nil
+}
+
+func (s *Service) queryRemoteNodeSamplesWithTimestamps(nodeID string, qr QueryRequest) ([]models.Record, error) {
+	endpoint, err := s.getNodeHTTPEndpoint(nodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	reqURL := endpoint + "/query-samples-records"
+
+	reqBody, err := json.Marshal(qr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", reqURL, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("query-samples-records returned %d: %s", resp.StatusCode, string(body))
+	}
+
+	var response struct {
+		Records []models.Record `json:"records"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, fmt.Errorf("failed to decode records response: %w", err)
+	}
+
+	log.Printf("[Query] Node %s returned %d records", nodeID, len(response.Records))
+	return response.Records, nil
 }
 
 // ---------------------------------------------------------------------------
