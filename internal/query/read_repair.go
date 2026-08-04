@@ -98,12 +98,12 @@ func (s *Service) performReadRepair() {
 
 	keys := s.store.GetOwnedSeriesKeys()
 	for _, key := range keys {
-		parts := strings.Split(key, "|")
+		parts := strings.SplitN(key, ":", 2)
 		if len(parts) != 2 {
 			continue
 		}
 		deviceID, metric := parts[0], parts[1]
-		routeKey := deviceID + ":" + metric
+		routeKey := key // key is already "deviceID:metricName"
 
 		nodes := cluster.GetNodesForKey(routeKey, 2)
 		if len(nodes) < 2 {

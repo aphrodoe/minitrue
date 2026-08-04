@@ -563,14 +563,17 @@ const QueryForm = ({ onSubmit, loading, onClearResults }) => {
       const response = await fetchFromCluster('/keys', {
         method: 'GET',
       });
-      if (response && response.devices && response.metrics) {
-        setDeviceIds(response.devices);
-        setMetricNames(response.metrics);
-        if (response.devices.length > 0 && !formData.device_id) {
-          setFormData(prev => ({ ...prev, device_id: response.devices[0] }));
-        }
-        if (response.metrics.length > 0 && !formData.metric_name) {
-          setFormData(prev => ({ ...prev, metric_name: response.metrics[0] }));
+      if (response && response.ok) {
+        const data = await response.json();
+        if (data && Array.isArray(data.devices) && Array.isArray(data.metrics)) {
+          setDeviceIds(data.devices);
+          setMetricNames(data.metrics);
+          if (data.devices.length > 0 && !formData.device_id) {
+            setFormData(prev => ({ ...prev, device_id: data.devices[0] }));
+          }
+          if (data.metrics.length > 0 && !formData.metric_name) {
+            setFormData(prev => ({ ...prev, metric_name: data.metrics[0] }));
+          }
         }
       }
     } catch (err) {

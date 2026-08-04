@@ -874,7 +874,7 @@ func (s *Service) handlePublicKeys(w http.ResponseWriter, r *http.Request) {
 	var allNodes []string
 	if state.Nodes != nil {
 		for nodeID, nodeInfo := range state.Nodes {
-			if nodeInfo.Status == "alive" {
+			if nodeInfo.Status == "active" {
 				allNodes = append(allNodes, nodeID)
 			}
 		}
@@ -918,7 +918,7 @@ func (s *Service) handlePublicKeys(w http.ResponseWriter, r *http.Request) {
 			mu.Lock()
 			defer mu.Unlock()
 			for _, key := range keys {
-				parts := strings.Split(key, "|")
+				parts := strings.SplitN(key, ":", 2)
 				if len(parts) == 2 {
 					deviceSet[parts[0]] = struct{}{}
 					metricSet[parts[1]] = struct{}{}

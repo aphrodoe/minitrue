@@ -65,11 +65,14 @@ services:
       - key: MINITRUE_SEEDS
         value: polaris:9000,sirius:9001,vega:9002
 
-  # 4. Publisher / Simulator (Web Service to pass Render health checks)
+  # 4. Publisher / Simulator
   - type: web
     name: publisher
     runtime: go
     plan: free
     buildCommand: go build -o bin/publisher cmd/publisher/main.go
-    startCommand: ./bin/publisher --sim=true --broker=tcp://broker.emqx.io:1883
+    startCommand: ./bin/publisher --sim=true
     healthCheckPath: /healthz
+    envVars:
+      - key: MINITRUE_INGEST_URL
+        value: https://polaris-5jj6.onrender.com/ingest
